@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% from "_macros.html" import sev as badge, contrib_bars %}{% from "_report.html" import report_view %}{% from "_icons.html" import icon %}{% block title %}Incident {{ inc.id }}{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ url_for('dash.overview') }}">Overview</a><span aria-hidden="true">›</span><a href="{{ url_for('inc.incidents') }}">Incidents</a><span aria-hidden="true">›</span><span aria-current="page">Incident #{{ inc.id }}</span></nav>
+<h1>Incident #{{ inc.id }} · {{ inc.title }} {{ badge(inc.severity) }} {% if inc.is_simulated %}<span class="sim">SIMULATED</span>{% endif %}</h1>
+<div class="facts-grid">
+<div><span class="k">Status</span><span class="pill {{ 'ok' if inc.status == 'Resolved' else ('info' if inc.status == 'False Positive' else ('warn' if inc.status == 'Investigating' else 'bad')) }}">{{ inc.status }}</span></div>
+<div><span class="k">Opened</span>{{ inc.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+<div><span class="k">Last updated</span>{{ inc.updated_at.strftime('%Y-%m-%d %H:%M') if inc.updated_at else '-' }}</div>
+<div><span class="k">Alerts</span>{{ alerts|length }}</div>
+{% if inc.resolution_note %}<div style="grid-column:1/-1"><span class="k">Note</span>{{ inc.resolution_note }}</div>{% endif %}
+</div>
+
+<h2>Change status</h2>
+<div class="card"><form method="post" action="{{ url_for('inc.set_status', iid=inc.id) }}" class="row" data-confirm="Change the status of incident #{{ inc.id }}?">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="revision" value="{{ inc.revision }}">
+<div class="field"><label for="st">Status</label><select id="st" name="status">{% for s in statuses %}<option {{ 'selected' if s == inc.status }}>{{ s }}</option>{% endfor %}</select></div>
+<div class="field" style="flex:1"><label for="note">Note <span class="muted small">(required to close as Resolved or False Positive)</span></label><textarea id="note" name="note" rows="2" maxlength="2000"></textarea></div>
+<button type="submit">Save status</button></form>
+<p class="small muted">Marking an incident as a False Positive adds its alerts to the model's failure cases on the Models page.</p></div>
+
+<h2>Alerts in this incident</h2>
+<div class="card"><table><caption class="sr-only">Alerts in incident {{ inc.id }}</caption><thead><tr><th scope="col">#</th><th scope="col">Severity</th><th scope="col">Category</th><th scope="col">Source → destination</th><th scope="col">Occurrences</th><th scope="col">First seen</th><th scope="col">Last seen</th><th scope="col">Max risk</th></tr></thead><tbody>
+{% for a in alerts %}<tr><td><a href="{{ url_for('dash.alert_detail', alert_id=a.id) }}" aria-label="Open alert {{ a.id }}">#{{ a.id }}</a>{% if a.id == inc.primary_alert_id %} <span class="muted small">(primary)</span>{% endif %}</td><td>{{ badge(a.severity) }}</td><td>{{ a.category }}</td><td>{{ a.src_ip|ip }} → {{ a.dst_ip|ip }}</td><td>{{ '{:,}'.format(a.occurrence_count) }}</td><td>{{ a.first_seen }}</td><td>{{ a.last_seen }}</td><td>{{ '%.2f'|format(a.max_risk or 0) }}</td></tr>{% endfor %}
+</tbody></table>
+<details class="inline-edit"><summary class="btn secondary btn-sm">Merge related alerts</summary>
+<form method="post" action="{{ url_for('inc.merge', iid=inc.id) }}" data-confirm="Merge the selected alerts into incident #{{ inc.id }}?">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="revision" value="{{ inc.revision }}">
+<fieldset><legend class="small muted">Recent alerts not yet in an incident</legend>
+{% for c in candidates %}<label class="small" style="display:block;font-weight:500"><input type="checkbox" name="alert_ids" value="{{ c.id }}"> #{{ c.id }} {{ c.severity }} · {{ c.category }} · {{ c.src_ip|ip }} → {{ c.dst_ip|ip }}</label>{% else %}<p class="muted small">Every alert already belongs to an incident.</p>{% endfor %}
+</fieldset>
+<div class="row"><label for="merge-id" class="small">Or alert number</label><input id="merge-id" name="alert_ids" inputmode="numeric" pattern="[0-9]*" style="width:120px"><button type="submit" class="btn-sm">Merge</button></div></form></details></div>
+
+{% if primary %}<h2>Why was this flagged?</h2>
+<div class="card">{% if primary.top_features %}{{ contrib_bars(primary.top_features) }}{% else %}<p class="muted">An explanation is not available for this alert.</p>{% endif %}</div>{% endif %}
+
+<h2 id="report">Incident report</h2>
+<div class="card report">
+<div class="row"><form method="post" action="{{ url_for('inc.request_report', iid=inc.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button type="submit">{{ icon('sparkles') }}<span>{{ 'Regenerate report' if report else 'Request report' }}</span></button></form>
+{% if report and not edit %}<a class="btn secondary" href="{{ url_for('inc.incident_detail', iid=inc.id, edit=1) }}#report">Edit report</a>{% endif %}
+<span class="small muted">{% if llm_configured %}AI report from structured facts only ({{ config.LLM_MODEL }}); a template is used if the AI service fails.{% else %}No AI service configured - reports are generated without AI.{% endif %}</span></div>
+{% if report and edit %}{% set c = report.content %}
+<form method="post" action="{{ url_for('inc.edit_report', iid=inc.id) }}" class="stack">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="revision" value="{{ inc.revision }}">
+<p class="small muted">Editing v{{ report.version }}. Saving creates a new version; the original stays unchanged.</p>
+<label for="e-what">What happened</label><textarea id="e-what" name="what_happened" rows="3" required>{{ c.what_happened }}</textarea>
+<label for="e-impact">Likely impact</label><textarea id="e-impact" name="likely_impact" rows="2">{{ c.likely_impact }}</textarea>
+<label for="e-conf">Confidence</label><select id="e-conf" name="confidence">{% for x in ['Low','Medium','High'] %}<option {{ 'selected' if x == c.confidence }}>{{ x }}</option>{% endfor %}</select>
+<label for="e-why">Confidence rationale</label><textarea id="e-why" name="confidence_rationale" rows="2">{{ c.confidence_rationale }}</textarea>
+<label for="e-steps">Recommended next steps (one per line)</label><textarea id="e-steps" name="recommended_next_steps" rows="4">{{ c.recommended_next_steps|join('\n') }}</textarea>
+<label for="e-unv">Unverified claims (one per line)</label><textarea id="e-unv" name="unverified_claims" rows="2">{{ c.unverified_claims|join('\n') }}</textarea>
+<div class="row"><button type="submit">Save as new version</button><a class="btn secondary" href="{{ url_for('inc.incident_detail', iid=inc.id) }}#report">Cancel</a></div></form>
+{% elif report %}{% macro vurl(v) %}{{ url_for('inc.incident_detail', iid=inc.id, report=v) }}#report{% endmacro %}{{ report_view(report, reports, vurl) }}
+{% else %}<p class="muted">No report yet. Request one to get a plain-English summary with recommended next steps.</p>{% endif %}
+</div>
+
+<h2>History</h2>
+<div class="card"><table><caption class="sr-only">Incident history</caption><thead><tr><th scope="col">Time</th><th scope="col">Who</th><th scope="col">Action</th><th scope="col">Details</th></tr></thead><tbody>
+{% for e in history %}<tr><td>{{ e.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ e.actor }}</td><td>{{ e.action }}</td><td class="small">{% for k, v in (e.details or {}).items() if k != 'incident_id' %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">No changes yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

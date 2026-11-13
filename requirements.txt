@@ -1,0 +1,25 @@
+# Core runtime - all pure-Python or with wheels for Windows (tested versions in comments).
+# Install:  python -m pip install --user -r requirements.txt
+# Web app
+Flask>=3.1,<4                 # 3.1.3
+Flask-Login>=0.6.3,<0.7       # 0.6.3
+Flask-WTF>=1.2,<2             # 1.3.0
+Flask-SQLAlchemy>=3.1,<4      # 3.1.1
+SQLAlchemy>=2.0.30,<3         # 2.1.8
+WTForms>=3.1,<4               # 3.3.2
+Werkzeug>=3.1,<4              # 3.1.9
+email-validator>=2.1,<3       # 2.3.0
+python-dotenv>=1.0,<2         # 1.2.4
+# Security
+argon2-cffi>=23.1             # 25.1.0
+cryptography>=42              # 50.0.2
+PyOTP>=2.9,<3                 # 2.10.0
+qrcode>=7.4                   # 8.2 (PNG if Pillow is installed, pure-Python SVG otherwise)
+# Data / ML
+numpy>=1.26                   # 2.5.4
+pandas>=2.2                   # 3.1.1
+scikit-learn>=1.5             # 1.9.1
+joblib>=1.3                   # 1.6.0
+# Ingestion
+dpkt>=1.9.8,<2                # 1.9.8 - pure Python .pcap/.pcapng parser
+requests>=2.31,<3             # 2.34.2 - replay simulator / downloads

@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Notification{% endblock %}
+{% block content %}{% if n %}
+<h1>Notification #{{ n.id }} - {{ n.status }}</h1>
+<div class="card"><table class="kv"><tr><td>To</td><td>{{ n.recipients }}</td></tr><tr><td>Subject</td><td>{{ n.subject }}</td></tr><tr><td>Channel</td><td>{{ n.channel or 'Email' }}</td></tr><tr><td>Kind</td><td>{{ n.kind }}</td></tr><tr><td>Attempts</td><td>{{ n.attempts }}</td></tr><tr><td>Reason / error</td><td>{{ n.reason or n.error or '-' }}</td></tr></table>
+<pre>{{ n.body or '(no body - suppressed)' }}</pre></div>{% else %}<p>Not found.</p>{% endif %}
+{% endblock %}

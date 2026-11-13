@@ -1,0 +1,43 @@
+{
+  "target": "10.66.0.10",
+  "attacker": "10.66.0.66",
+  "phases": [
+    {
+      "phase": "benign",
+      "start": 1794398880.6513383,
+      "end": 1794398890.4891593,
+      "requests": 30
+    },
+    {
+      "phase": "scan",
+      "start": 1794398892.4893172,
+      "end": 1794398892.5401793,
+      "ports": 1024,
+      "open": [
+        22,
+        80
+      ],
+      "tool": "python connect() scan"
+    },
+    {
+      "phase": "flood",
+      "start": 1794398894.540311,
+      "end": 1794398904.5404322,
+      "packets": 2000,
+      "pps": 200,
+      "tool": "python raw-socket SYN sender"
+    },
+    {
+      "phase": "benign",
+      "start": 1794398906.5405564,
+      "end": 1794398909.7927735,
+      "requests": 10
+    }
+  ],
+  "mode": "network namespace (unshare -rn), loopback only - Docker not used",
+  "pcap": "lab/captures/netns_lab.pcap",
+  "packets_captured": 8592,
+  "interfaces": [
+    "lo"
+  ]
+}

@@ -1,0 +1,10 @@
+# Optional extras - everything works without them (graceful fallbacks shown).
+# Install what your Python version has wheels for, one by one if needed:
+#   python -m pip install --user -r requirements-optional.txt
+shap>=0.45            # 0.54.1 - SHAP TreeExplainer for Random Forest explanations
+                      #   (fallback: exact in-house Saabas/TreeInterpreter path contributions; needs numba/llvmlite,
+                      #    which may not have wheels for brand-new Python versions)
+maxminddb>=2.6        # 3.2.0 - fast GeoIP reader (fallback: built-in pure-Python MMDB reader)
+matplotlib>=3.8       # 3.11.2 - evaluation plots in reports/*.png (fallback: plots skipped, metrics still written)
+pyarrow>=15           # 26.0.1 - parquet cache for the dataset (fallback: pickle cache)
+pillow>=10            # 13.0.0 - PNG QR codes (fallback: SVG QR code)

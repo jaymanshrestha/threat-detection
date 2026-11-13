@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Sign in{% endblock %}
+{% block content %}{% from "_icons.html" import icon %}
+<div class="auth"><div class="card">
+<div class="auth-brand"><span class="logo">{{ icon('shield') }}</span><b>SentinelSMB</b><span class="muted small">AI-driven network threat detection</span></div>
+<div class="steps"><span class="on">1 · Password</span><span>2 · Authenticator</span></div>
+<h1>Administrator sign in</h1>
+<form method="post" id="login-form" novalidate>
+  {{ form.hidden_tag() }}
+  <label for="email">Email</label>{{ form.email(id="email", autocomplete="username", autofocus=true, **{"aria-describedby": "email-hint"}) }}
+  <div id="email-hint" class="err small hidden">Enter a valid email address.</div>
+  <label for="password">Password</label>{{ form.password(id="password", autocomplete="current-password") }}
+  <button type="submit">{{ icon('lock') }}<span>Sign in</span></button>
+  {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+</form>
+<p class="muted small">Multi-factor authentication is required for all administrators.</p>
+<div class="trust"><span>{{ icon('lock') }}Encrypted session</span><span>{{ icon('key') }}TOTP MFA</span><span>{{ icon('file') }}Audited sign-ins</span></div>
+</div></div>
+{% endblock %}

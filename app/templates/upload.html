@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% from "_icons.html" import icon %}{% block title %}Upload {{ profile }}{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ url_for('dash.sources') }}">Data sources</a><span aria-hidden="true">›</span><span aria-current="page">Upload {{ profile }}</span></nav>
+<h1>Upload logs</h1>
+<p class="page-sub">UC-08 Upload a log file. The system checks every record, shows how many were accepted and rejected (and why), then analyses the accepted ones.</p>
+<nav class="tabs" aria-label="Log format">{% for name, a in adapters.items() %}<a href="{{ url_for('dash.upload', profile=name) }}" class="{{ 'active' if name==profile }}" {% if name==profile %}aria-current="page"{% endif %}>{{ name }}</a>{% endfor %}</nav>
+<div class="card" style="margin-top:12px"><h2>{{ adapters[profile].description }}</h2>
+<p class="small">{{ help }}</p>
+{% if error %}<div class="flash danger" role="alert" id="upload-error">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="stack">{{ form.hidden_tag() }}<div class="field"><label for="upload-file">{{ profile }} file</label>{{ form.file(accept=adapters[profile].extensions|join(','), id="upload-file") }}</div>
+{% if profile == 'cicids2017' %}<details><summary>Also save this file as a replay dataset (optional)</summary>
+<div class="stack" style="margin-top:8px"><label style="font-weight:500"><input type="checkbox" name="save_dataset" value="1"> Save as a replay dataset for the Simulator</label>
+<div class="row"><div class="field"><label for="ds-name">Dataset name</label><input id="ds-name" name="ds_name" maxlength="128" placeholder="defaults to the file name"></div>
+<div class="field"><label for="ds-origin">Origin</label><input id="ds-origin" name="ds_origin" maxlength="500" placeholder="e.g. Office firewall export, 1 Oct 2026"></div>
+<div class="field"><label for="ds-licence">Licence / terms</label><input id="ds-licence" name="ds_licence" maxlength="500" placeholder="e.g. Internal use only"></div></div></div></details>{% endif %}
+<div class="row"><button type="submit">{{ icon('upload') }}<span>Upload and analyse</span></button><a class="btn secondary" href="{{ url_for('dash.sources') }}">Cancel</a></div></form>
+<p class="small muted">Accepted extensions: {{ adapters[profile].extensions|join(', ') or 'any' }} · max {{ (config.MAX_CONTENT_LENGTH // 1048576) if config.MAX_CONTENT_LENGTH else '-' }} MB. Invalid records (bad IPs, ports outside 0-65535, unreadable timestamps, negative or non-finite values) are skipped and counted; the file content itself is not stored.</p></div>
+<h2>Recent {{ profile }} jobs</h2>
+<div class="card"><table><thead><tr><th>#</th><th>Time</th><th>Source</th><th>File</th><th>Status</th><th>Records</th><th>Accepted</th><th>Rejected</th><th>Details</th></tr></thead><tbody>
+{% for j in jobs %}<tr><td>{{ j.id }}</td><td>{{ j.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ j.source }}</td><td class="small">{{ j.filename }}</td><td>{{ j.status }}</td><td>{{ j.total_rows }}</td><td>{{ j.accepted }}</td><td>{{ j.rejected }}</td><td class="small">{% if j.reasons %}{% for k, v in j.reasons.items() %}{{ k }}: {{ v }}{% if not loop.last %}; {% endif %}{% endfor %}{% endif %}</td></tr>
+{% else %}<tr><td colspan="9" class="muted">No {{ profile }} jobs yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

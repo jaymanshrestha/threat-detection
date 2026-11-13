@@ -1,0 +1,15 @@
+{# Shared incident-report view (UC-04 A3-A5, UC-10). ver_url(v) builds the link for a version. #}
+{% macro report_view(report, reports, ver_url) %}
+{% set ai = report.generator.startswith('LLM') %}
+<p><span class="tag {{ 'ai' if ai else 'tpl' }}">{{ report|report_label }}</span>
+<span class="small muted">v{{ report.version }} · {{ report.created_at.strftime('%Y-%m-%d %H:%M:%S') }} · {{ report.generator }}{% if reports|length > 1 %} · versions: {% for r in reports %}<a href="{{ ver_url(r.version) }}" {% if r.version == report.version %}aria-current="true"{% endif %}>v{{ r.version }}</a> {% endfor %}{% endif %}</span></p>
+{% if report.injection_flags %}<div class="banner">⚠ {{ report.injection_flags|length }} input field(s) looked like prompt-injection text and were removed before generation: {{ report.injection_flags|join(', ') }}</div>{% endif %}
+{% if report.error %}<div class="small muted">AI service error: {{ report.error }}</div>{% endif %}
+{% set c = report.content %}
+<h3>What happened</h3><p>{{ c.what_happened }}</p>
+<h3>Likely impact</h3><p>{{ c.likely_impact }}</p>
+<h3>Confidence: {{ c.confidence }}</h3><p>{{ c.confidence_rationale }}</p>
+<h3>Recommended next steps</h3><ol>{% for s in c.recommended_next_steps %}<li>{{ s }}</li>{% endfor %}</ol>
+<div class="unverified"><h3>Unverified claims - check before acting</h3><ul>{% for s in c.unverified_claims %}<li>{{ s }}</li>{% else %}<li class="muted">none listed</li>{% endfor %}</ul></div>
+<details><summary class="small">Show source facts (IPs {{ 'pseudonymised' if report.facts.ip_representation == 'keyed pseudonym' else 'truncated' }}, no raw log text)</summary><pre class="small">{{ report.facts|tojson(indent=2) }}</pre></details>
+{% endmacro %}

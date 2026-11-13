@@ -1,0 +1,52 @@
+{
+  "description": "Supplementary analysis: how many test-day false positives come from traffic the\nCIC-IDS2017 CSVs label BENIGN although the UNB attack schedule describes it as\nattack activity. Headline metrics in reports/metrics.json are NOT changed.\n\n  A) Thursday 15:04-15:45: compromised Vista host 192.168.10.8 port-scans all\n     internal clients (infiltration 'second step' on the UNB dataset page).\n  B) Reply-direction flows 192.168.10.50 -> 172.16.0.1 (victim web server replying\n     through the firewall NAT to the attacker) during Friday attacks.",
+  "excluded_benign_flows": {
+    "A_vista_internal_scan": 72274,
+    "B_victim_reply_flows": 34052
+  },
+  "isolation_forest": {
+    "false_positives_total": 113829,
+    "fp_from_A": 60974,
+    "fp_from_B": 31422,
+    "metrics_excluding_A_and_B": {
+      "precision": 0.9288,
+      "recall": 0.9611,
+      "f1": 0.9447,
+      "false_positive_rate": 0.02806,
+      "tp": 279683,
+      "fp": 21433,
+      "tn": 742522,
+      "fn": 11318
+    }
+  },
+  "rule_baseline": {
+    "false_positives_total": 55535,
+    "fp_from_A": 36883,
+    "fp_from_B": 16327,
+    "metrics_excluding_A_and_B": {
+      "precision": 0.9911,
+      "recall": 0.8925,
+      "f1": 0.9392,
+      "false_positive_rate": 0.00304,
+      "tp": 259713,
+      "fp": 2325,
+      "tn": 761630,
+      "fn": 31288
+    }
+  },
+  "hybrid_if_or_rule": {
+    "false_positives_total": 116143,
+    "fp_from_A": 62642,
+    "fp_from_B": 31422,
+    "metrics_excluding_A_and_B": {
+      "precision": 0.9268,
+      "recall": 0.9613,
+      "f1": 0.9437,
+      "false_positive_rate": 0.0289,
+      "tp": 279733,
+      "fp": 22079,
+      "tn": 741876,
+      "fn": 11268
+    }
+  }
+}

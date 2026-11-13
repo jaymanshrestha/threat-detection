@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Set up MFA{% endblock %}
+{% block content %}{% from "_icons.html" import icon %}
+<div class="auth wide"><div class="card">
+<div class="auth-brand"><span class="logo">{{ icon('shield') }}</span><b>SentinelSMB</b><span class="muted small">AI-driven network threat detection</span></div>
+<div class="steps"><span>1 · {{ "Set password" if invite else "Password" }}</span><span class="on">2 · Enrol authenticator</span></div>
+<h1>Set up two-factor authentication</h1>
+<p class="muted">Scan this QR code with Google Authenticator, Microsoft Authenticator or another TOTP app, then enter the 6-digit code to finish {{ "activating your account" if invite else "signing in" }}. {{ "You have five minutes." if invite else "You have two minutes." }}</p>
+<p style="text-align:center"><img src="{{ qr }}" alt="TOTP enrolment QR code" width="220" height="220" class="qr"></p>
+<p class="small muted">Can't scan? Enter this key manually: <code>{{ secret }}</code></p>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <label for="code">Authenticator code</label>{{ form.code(id="code", inputmode="numeric", autocomplete="one-time-code", maxlength=6) }}
+  <button type="submit">{{ icon('key') }}<span>Verify and finish</span></button>
+  {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+</form>
+<div class="trust"><span>{{ icon('lock') }}Encrypted session</span><span>{{ icon('key') }}TOTP MFA</span><span>{{ icon('file') }}Audited sign-ins</span></div>
+</div></div>
+{% endblock %}

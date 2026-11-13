@@ -1,0 +1,96 @@
+{% extends "base.html" %}{% from "_macros.html" import sev as badge %}{% from "_icons.html" import icon %}{% block title %}Style guide{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>SentinelSMB style guide</h1>
+<p class="page-sub">The single reference for colours, type and components used on every screen. Contrast ratios are calculated with the WCAG 2.1 formula from the same tokens the stylesheet uses (<code>app/design_tokens.py</code>).</p></div></div>
+
+<section id="sg-palette" aria-labelledby="h-pal"><h2 id="h-pal">1. Colour palette</h2>
+{% for tname, T in themes.items() %}
+<div class="card" style="margin-bottom:16px"><h3 style="margin-top:0">{{ tname|capitalize }} theme</h3>
+{% for group, items in T.palette %}
+<div class="field-label" style="margin:12px 0 8px">{{ group }}</div>
+<div class="sg-grid">{% for c in items %}
+<div class="swatch"><div class="chip" style="background:{{ c.hex }};color:{{ '#ffffff' if c.white_on >= 4.5 else '#0d1430' }}">{{ c.hex }}</div>
+<div class="meta"><b>{{ c.name }}</b>{% if c.css %}<code>{{ c.css }}</code><br>{% endif %}vs surface <span class="ratio {{ 'pass' if c.on_surface >= 3 else 'fail' }}">{{ '%.2f'|format(c.on_surface) }}:1</span></div></div>
+{% endfor %}</div>{% endfor %}
+</div>{% endfor %}</section>
+
+<section id="sg-contrast" aria-labelledby="h-con"><h2 id="h-con">2. Contrast audit (WCAG 2.1 AA)</h2>
+<div class="card"><p class="small muted" style="margin-top:0">Body text needs 4.5:1; large text (24px, or 18.66px bold) and UI parts such as field borders, focus rings and severity dots need 3:1. "Before" is the palette prior to the accessibility pass; red = failed.</p>
+{% set D = themes.dark.audit %}{% set L = themes.light.audit %}
+<table><thead><tr><th scope="col">Colour pair</th><th scope="col">Used for</th><th scope="col">Needs</th><th scope="col">Dark sample</th><th scope="col">Dark before → now</th><th scope="col">Light sample</th><th scope="col">Light before → now</th></tr></thead><tbody>
+{% for i in range(D|length) %}{% set d = D[i] %}{% set l = L[i] %}<tr><td><b>{{ d.pair }}</b></td><td class="small muted">{{ d.where }}</td><td class="small">{{ d.required }}:1</td>
+<td><span style="display:inline-block;padding:3px 9px;border-radius:8px;background:{{ d.bg }};color:{{ d.fg }};font-weight:700;border:1px solid var(--border)">Aa</span></td>
+<td><span class="ratio {{ 'pass' if d.before_pass else 'fail' }}">{{ '%.2f'|format(d.before) }}</span> → <span class="ratio {{ 'pass' if d.pass else 'fail' }}">{{ '%.2f'|format(d.ratio) }}</span> <b class="small">{{ 'AAA' if d.aaa else ('AA' if d.pass else 'Fail') }}</b></td>
+<td><span style="display:inline-block;padding:3px 9px;border-radius:8px;background:{{ l.bg }};color:{{ l.fg }};font-weight:700;border:1px solid var(--border)">Aa</span></td>
+<td><span class="ratio {{ 'pass' if l.before_pass else 'fail' }}">{{ '%.2f'|format(l.before) }}</span> → <span class="ratio {{ 'pass' if l.pass else 'fail' }}">{{ '%.2f'|format(l.ratio) }}</span> <b class="small">{{ 'AAA' if l.aaa else ('AA' if l.pass else 'Fail') }}</b></td></tr>{% endfor %}
+</tbody></table></div></section>
+
+<section id="sg-type"><h2>3. Typography</h2>
+<div class="card"><p class="small muted" style="margin-top:0">Typeface: <b>Inter</b> (variable, SIL Open Font License, bundled with the app so it works offline). Fallback: system-ui, Segoe UI, Roboto. Monospace: Cascadia Code / Consolas for IPs and code. Tabular numbers are on everywhere so counters do not jump.</p>
+{% for name, size, weight, sample in type_scale %}<div class="type-row"><div class="spec"><b>{{ name }}</b><br>{{ size }} · weight {{ weight }}</div><div style="font-size:{{ size }};font-weight:{{ weight }};{{ 'text-transform:uppercase;letter-spacing:.09em;color:var(--muted)' if 'Overline' in name else '' }}">{{ sample }}</div></div>{% endfor %}
+<div class="type-row"><div class="spec"><b>Monospace</b><br>12.5px · code</div><div><code>192.168.10.50 → 93.184.216.34:443/TCP</code></div></div>
+</div>
+
+</section>
+<section id="sg-buttons"><h2>4. Buttons</h2>
+<div class="card"><div class="sg-row">
+<button type="button">{{ icon('sparkles') }}<span>Primary action</span></button>
+<button type="button" class="secondary">Secondary</button>
+<button type="button" class="danger">Destructive</button>
+<button type="button" class="btn-sm">Small</button>
+<button type="button" disabled>Disabled</button>
+<button type="button" class="icon-btn" aria-label="Example icon button">{{ icon('bell') }}</button>
+<a class="btn" href="#buttons">Link styled as button</a>
+</div>
+<ul class="small muted"><li><b>Primary</b> (gradient #0e7490 → #7c3aed → #a21caf, white text ≥ 5.3:1 at every point): one main action per form, e.g. Sign in, Generate report, Save.</li>
+<li><b>Secondary</b> (outlined): filters, test actions, reversible actions.</li>
+<li><b>Destructive</b> (orange → red): disabling a user; always behind a confirmation dialog.</li>
+<li>Icon-only buttons always carry an <code>aria-label</code>; all buttons are at least 34-38px tall and show a 2px cyan focus ring when reached by keyboard.</li></ul></div>
+
+</section>
+<section id="sg-badges"><h2>5. Severity, badges and tags</h2>
+<div class="card"><div class="sg-row">{% for s in severities|reverse %}{{ badge(s) }}{% endfor %}
+<span class="sim">SIMULATED</span><span class="tag ai">AI-generated - verify before acting</span><span class="tag tpl">Template report</span>
+<span class="trend up">▲ +12 /min</span><span class="trend down">▼ -4 /min</span></div>
+<p class="small muted">Severity is never shown by colour alone: every badge carries the word (Low, Medium, High, Critical). Critical badges pulse unless the user prefers reduced motion. Badge text uses a darker / lighter shade of the severity colour so it passes 4.5:1 on the tinted pill.</p></div>
+
+</section>
+<section id="sg-forms"><h2>6. Form elements</h2>
+<div class="card"><div class="row" role="group" aria-label="Form element examples">
+<div class="field"><label for="sg-text">Text field</label><input id="sg-text" value="admin@example.com"></div>
+<div class="field"><label for="sg-select">Select</label><select id="sg-select"><option>All severities</option><option>Critical</option></select></div>
+<div class="field"><label for="sg-num">Number</label><input id="sg-num" type="number" value="0.70" step="0.05" style="width:100px"></div>
+<div class="field"><label for="sg-range">Slider</label><input id="sg-range" type="range" min="0" max="1" step="0.05" value="0.7"></div>
+<div class="field"><label for="sg-date">Date</label><input id="sg-date" type="date"></div>
+<div class="field" style="flex-basis:100%"><label for="sg-area">Text area</label><textarea id="sg-area" rows="2" cols="40">soc@example.com</textarea></div>
+</div>
+<div class="err small" role="note">Error message example: Enter a valid email address.</div>
+<p class="small muted">Every field has a visible label tied to it with <code>for</code>/<code>id</code>. Field borders are 3:1 or better against the card so the field outline is visible.</p></div>
+
+</section>
+<section id="sg-cards"><h2>7. Cards and data display</h2>
+<div class="grid tiles">
+<div class="card tile t-cyan"><div class="top"><div class="l">KPI tile</div><span class="ic">{{ icon('layers') }}</span></div><div class="v">239,855</div><div class="meta"><span class="trend info up">▲ +417 /min</span><span>meta text</span></div></div>
+<div class="card tile t-red"><div class="top"><div class="l">Critical tile</div><span class="ic">{{ icon('flame') }}</span></div><div class="v crit">42</div><div class="small muted">large text, 3:1 rule</div></div>
+<div class="card sg-demo-card"><h2>Card title</h2><p class="small muted" style="margin:0">Glass card: 16px radius, 1px border, blur behind. Used for every panel, chart and table.</p></div>
+</div>
+<div class="card" style="margin-top:16px"><table><thead><tr><th scope="col">Severity</th><th scope="col">Category</th><th scope="col">Source → destination</th><th scope="col">Occurrences</th></tr></thead>
+<tbody><tr><td>{{ badge('Critical') }}</td><td><a href="#">Port scan</a></td><td>172.16.0.1 → 192.168.10.50</td><td>546</td></tr>
+<tr><td>{{ badge('Medium') }}</td><td><a href="#">Anomaly - unclassified</a></td><td>192.168.10.5 → 93.184.216.29</td><td>2</td></tr></tbody></table></div>
+
+</section>
+<section id="sg-icons"><h2>8. Icons</h2>
+<div class="card"><div class="sg-row">{% for n in icons %}<span class="tag" style="display:inline-flex;gap:6px;align-items:center">{{ icon(n) }}{{ n }}</span>{% endfor %}</div>
+<p class="small muted">Stroke icons on a 24px grid, drawn for this project. Icons are decorative (<code>aria-hidden</code>) and always sit next to a text label, or the button has an <code>aria-label</code>.</p></div>
+
+</section>
+<section id="sg-rules"><h2>9. Layout and accessibility rules</h2>
+<div class="card"><ul class="small">
+<li>Layout: 248px sidebar (Monitor / Intelligence / Administration) + sticky top bar (live status, theme switch, user, sign out) + content up to 1640px. Below 980px the sidebar becomes a slide-out menu.</li>
+<li>Every page starts with one H1 and a one-line subtitle; sections use H2 with the gradient marker.</li>
+<li>"Skip to content" link, landmark regions (navigation, main), <code>aria-current</code> on the active page, breadcrumbs on detail pages.</li>
+<li>Live status uses <code>role="status"</code> so screen readers announce stream changes; charts have text labels and the same data is in tables.</li>
+<li>Animations respect <code>prefers-reduced-motion</code>. Both a dark and a light theme are provided and both pass WCAG AA.</li>
+</ul></div>
+</section>
+{% endblock %}

@@ -1,0 +1,5 @@
+# Development / verification tools (not needed to run the app)
+-r requirements.txt
+pytest>=8                     # 9.2.0
+aiosmtpd>=1.4.4               # 1.4.6 - local test SMTP server
+playwright>=1.45              # 1.65.0 - screenshots (then: python -m playwright install chromium)

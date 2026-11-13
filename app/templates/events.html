@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% from "_macros.html" import sev as badge, feats, pager %}{% block title %}Flagged events{% endblock %}
+{% block content %}
+<div data-autorefresh="15"></div>
+<div class="page-head"><div><h1>Flagged events</h1><p class="page-sub">Individual flows the detectors flagged, newest first.</p></div>
+<form method="get" class="row" role="search" aria-label="Filter by severity"><div class="field"><label for="f-sev">Severity</label><select id="f-sev" name="severity"><option value="">All severities</option>{% for s in SEVERITIES|reverse %}<option {{ 'selected' if s==sev }}>{{ s }}</option>{% endfor %}</select></div><button class="secondary" type="submit">Filter</button></form></div>
+<p class="muted small">Auto-refreshes every 15 s. Isolation Forest flags are shown as "Anomaly - unclassified" unless a rule identifies a category. "Dataset label" is the public dataset's ground truth, shown for evaluation only.</p>
+<div class="card"><table>
+<thead><tr><th>Flow time</th><th>Severity</th><th>Risk</th><th>Source</th><th>Destination</th><th>Proto</th><th>Detector / category</th><th>Why flagged</th><th>Dataset label</th><th>Alert</th></tr></thead>
+<tbody>
+{% for e in page.items %}<tr>
+<td>{{ e.observed_at }} {% if e.is_simulated %}<span class="sim">SIMULATED</span>{% endif %}</td>
+<td>{{ badge(e.severity) }}</td><td>{{ '%.2f'|format(e.risk or 0) }}</td>
+<td>{{ e.src_ip|ip }}:{{ e.src_port }}</td><td>{{ e.dst_ip|ip }}:{{ e.dst_port }}</td><td>{{ e.protocol }}</td>
+<td>{% for d in dets.get(e.id, []) %}<div>{{ d.model_version }} · {{ d.predicted_label }}</div>{% endfor %}</td>
+<td>{% for d in dets.get(e.id, []) %}<div>{{ feats(d.top_features) }}</div>{% endfor %}</td>
+<td class="small">{{ e.dataset_label or '-' }}</td>
+<td>{% set a = (dets.get(e.id) or [None])[0] %}{% if a and a.alert_id %}<a href="{{ url_for('dash.alert_detail', alert_id=a.alert_id) }}">#{{ a.alert_id }}</a>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="10" class="muted">No flagged events yet.</td></tr>{% endfor %}
+</tbody></table>
+{{ pager(page, 'dash.events', severity=sev or '') }}</div>
+{% endblock %}

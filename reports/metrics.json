@@ -1,0 +1,1559 @@
+{
+  "generated_at": "2026-11-13T18:05:45",
+  "dataset": {
+    "name": "CIC-IDS2017 (GeneratedLabelledFlows / TrafficLabelling CSVs)",
+    "official_page": "https://www.unb.ca/cic/datasets/ids-2017.html",
+    "mirror_used": "https://huggingface.co/datasets/bencorn/CICIDS2017 (csvs/GeneratedLabelledFlows.zip)",
+    "citation": "Iman Sharafaldin, Arash Habibi Lashkari, Ali A. Ghorbani, 'Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization', ICISSP 2018."
+  },
+  "split": {
+    "train": {
+      "days": [
+        "Monday"
+      ],
+      "flows": 529466,
+      "benign": 529466,
+      "attack": 0,
+      "capture_hours": 8.09,
+      "labels": {
+        "BENIGN": 529466
+      },
+      "note": "Isolation Forest is fitted on benign flows only (Monday has no attacks)."
+    },
+    "validation": {
+      "days": [
+        "Tuesday",
+        "Wednesday"
+      ],
+      "flows": 1137013,
+      "benign": 871458,
+      "attack": 265555,
+      "capture_hours": 16.58,
+      "labels": {
+        "BENIGN": 871458,
+        "DoS Hulk": 230124,
+        "DoS GoldenEye": 10293,
+        "FTP-Patator": 7935,
+        "SSH-Patator": 5897,
+        "DoS slowloris": 5796,
+        "DoS Slowhttptest": 5499,
+        "Heartbleed": 11
+      }
+    },
+    "test": {
+      "days": [
+        "Thursday",
+        "Friday"
+      ],
+      "flows": 1161282,
+      "benign": 870281,
+      "attack": 291001,
+      "capture_hours": 16.13,
+      "labels": {
+        "BENIGN": 870281,
+        "PortScan": 158804,
+        "DDoS": 128025,
+        "Bot": 1956,
+        "Web Attack - Brute Force": 1507,
+        "Web Attack - XSS": 652,
+        "Infiltration": 36,
+        "Web Attack - Sql Injection": 21
+      }
+    }
+  },
+  "ingestion": {
+    "Monday-WorkingHours.pcap_ISCX.csv": {
+      "total_rows": 529918,
+      "accepted": 529466,
+      "rejected": 452,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 437,
+        "negative_value": 15
+      },
+      "missing_columns": []
+    },
+    "Tuesday-WorkingHours.pcap_ISCX.csv": {
+      "total_rows": 445909,
+      "accepted": 445628,
+      "rejected": 281,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 264,
+        "negative_value": 17
+      },
+      "missing_columns": []
+    },
+    "Wednesday-workingHours.pcap_ISCX.csv": {
+      "total_rows": 692703,
+      "accepted": 691385,
+      "rejected": 1318,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 1297,
+        "negative_value": 21
+      },
+      "missing_columns": []
+    },
+    "Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv": {
+      "total_rows": 458968,
+      "accepted": 170220,
+      "rejected": 288748,
+      "reasons": {
+        "blank_row": 288602,
+        "non_numeric_or_infinite_feature": 135,
+        "negative_value": 11
+      },
+      "missing_columns": []
+    },
+    "Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX.csv": {
+      "total_rows": 288602,
+      "accepted": 288391,
+      "rejected": 211,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 207,
+        "negative_value": 4
+      },
+      "missing_columns": []
+    },
+    "Friday-WorkingHours-Morning.pcap_ISCX.csv": {
+      "total_rows": 191033,
+      "accepted": 190902,
+      "rejected": 131,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 122,
+        "negative_value": 9
+      },
+      "missing_columns": []
+    },
+    "Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv": {
+      "total_rows": 286467,
+      "accepted": 286060,
+      "rejected": 407,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 371,
+        "negative_value": 36
+      },
+      "missing_columns": []
+    },
+    "Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv": {
+      "total_rows": 225745,
+      "accepted": 225709,
+      "rejected": 36,
+      "reasons": {
+        "non_numeric_or_infinite_feature": 34,
+        "negative_value": 2
+      },
+      "missing_columns": []
+    }
+  },
+  "model": {
+    "name": "Isolation Forest v1",
+    "type": "Unsupervised",
+    "preprocessing": "pp-v1 (signed log1p of CICFlowMeter stats + 60s per-source window counts)",
+    "features": [
+      "flow_duration",
+      "fwd_packets",
+      "bwd_packets",
+      "fwd_bytes",
+      "bwd_bytes",
+      "flow_packets_per_s",
+      "pkt_len_mean",
+      "init_win_fwd",
+      "init_win_bwd",
+      "src_flows_in_window",
+      "src_distinct_dports_in_window",
+      "src_dst_flows_in_window"
+    ],
+    "params": {
+      "bootstrap": false,
+      "contamination": "auto",
+      "max_features": 1.0,
+      "max_samples": 256,
+      "n_estimators": 200,
+      "n_jobs": -1,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "raw_threshold": 0.585431114894378,
+    "risk_threshold_default": 0.7,
+    "calibration_knots": {
+      "raw": [
+        0.0,
+        0.47742023612010026,
+        0.585431114894378,
+        0.6556282898604925
+      ],
+      "risk": [
+        0.0,
+        0.35,
+        0.7,
+        1.0
+      ]
+    },
+    "threshold_selection": "raw score cut-off that maximises F1 on the validation days; mapped to risk 0.70 by the calibration"
+  },
+  "rule_baseline": {
+    "portscan_ports": 731,
+    "flood_flows": 891,
+    "version": "v1"
+  },
+  "supervised_model": {
+    "name": "Random Forest v1",
+    "type": "Supervised",
+    "features": [
+      "flow_duration",
+      "fwd_packets",
+      "bwd_packets",
+      "fwd_bytes",
+      "bwd_bytes",
+      "flow_packets_per_s",
+      "pkt_len_mean",
+      "init_win_fwd",
+      "init_win_bwd",
+      "src_flows_in_window",
+      "src_distinct_dports_in_window",
+      "src_dst_flows_in_window"
+    ],
+    "params": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "class_weight": "balanced_subsample",
+      "criterion": "gini",
+      "max_depth": 14,
+      "max_features": "sqrt",
+      "max_leaf_nodes": null,
+      "max_samples": 0.25,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 20,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 100,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "proba_threshold": 0.15,
+    "risk_threshold_default": 0.7,
+    "calibration_knots": {
+      "proba": [
+        0.0,
+        0.0,
+        0.15,
+        1.0
+      ],
+      "risk": [
+        0.0,
+        0.35,
+        0.7,
+        1.0
+      ]
+    },
+    "split": {
+      "train": "Monday + Tuesday + Wednesday < 10:40",
+      "tune": "Wednesday >= 10:40",
+      "train_rows": 1099487,
+      "train_attacks": 25122,
+      "train_labels": {
+        "BENIGN": 1074365,
+        "FTP-Patator": 7935,
+        "SSH-Patator": 5897,
+        "DoS slowloris": 5791,
+        "DoS Slowhttptest": 5499
+      },
+      "tune_labels": {
+        "BENIGN": 326559,
+        "DoS Hulk": 230124,
+        "DoS GoldenEye": 10293,
+        "Heartbleed": 11,
+        "DoS slowloris": 5
+      }
+    },
+    "threshold_selection": "probability cut-off maximising F1 on the Wednesday >= 10:40 tuning block; mapped to risk 0.70",
+    "explanations": {
+      "method": "SHAP (shap.TreeExplainer)",
+      "base_value": 0.5,
+      "sample": "1,000 attack + 1,000 benign test flows",
+      "features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "mean_abs_contribution": 0.26332,
+          "impurity_importance": 0.34539
+        },
+        {
+          "feature": "flows source->destination (60s)",
+          "mean_abs_contribution": 0.07563,
+          "impurity_importance": 0.14798
+        },
+        {
+          "feature": "initial TCP window (fwd)",
+          "mean_abs_contribution": 0.06443,
+          "impurity_importance": 0.18951
+        },
+        {
+          "feature": "bwd bytes",
+          "mean_abs_contribution": 0.05493,
+          "impurity_importance": 0.0506
+        },
+        {
+          "feature": "flow duration",
+          "mean_abs_contribution": 0.03186,
+          "impurity_importance": 0.0494
+        },
+        {
+          "feature": "packet rate",
+          "mean_abs_contribution": 0.02438,
+          "impurity_importance": 0.04353
+        },
+        {
+          "feature": "initial TCP window (bwd)",
+          "mean_abs_contribution": 0.0232,
+          "impurity_importance": 0.05619
+        },
+        {
+          "feature": "pkt len mean",
+          "mean_abs_contribution": 0.01923,
+          "impurity_importance": 0.03717
+        },
+        {
+          "feature": "fwd bytes",
+          "mean_abs_contribution": 0.01226,
+          "impurity_importance": 0.02654
+        },
+        {
+          "feature": "bwd packets",
+          "mean_abs_contribution": 0.01087,
+          "impurity_importance": 0.01479
+        },
+        {
+          "feature": "fwd packets",
+          "mean_abs_contribution": 0.00729,
+          "impurity_importance": 0.01013
+        },
+        {
+          "feature": "flows from source (60s)",
+          "mean_abs_contribution": 0.00639,
+          "impurity_importance": 0.02877
+        }
+      ]
+    }
+  },
+  "results": {
+    "isolation_forest": {
+      "test": {
+        "tp": 279683,
+        "fp": 113829,
+        "tn": 756452,
+        "fn": 11318,
+        "precision": 0.7107,
+        "recall": 0.9611,
+        "f1": 0.8172,
+        "false_positive_rate": 0.1308,
+        "fp_flows_per_hour": 7055.5,
+        "fp_per_1000_benign_flows": 130.8,
+        "fp_alert_groups": 6861,
+        "fp_alerts_per_hour": 425.27,
+        "roc_auc": 0.9364,
+        "pr_auc_average_precision": 0.7749,
+        "per_category_detection_rate": {
+          "BENIGN": {
+            "flows": 870281,
+            "flagged": 113829,
+            "rate": 0.1308
+          },
+          "Bot": {
+            "flows": 1956,
+            "flagged": 43,
+            "rate": 0.022
+          },
+          "DDoS": {
+            "flows": 128025,
+            "flagged": 120654,
+            "rate": 0.9424
+          },
+          "Infiltration": {
+            "flows": 36,
+            "flagged": 16,
+            "rate": 0.4444
+          },
+          "PortScan": {
+            "flows": 158804,
+            "flagged": 157899,
+            "rate": 0.9943
+          },
+          "Web Attack - Brute Force": {
+            "flows": 1507,
+            "flagged": 760,
+            "rate": 0.5043
+          },
+          "Web Attack - Sql Injection": {
+            "flows": 21,
+            "flagged": 0,
+            "rate": 0.0
+          },
+          "Web Attack - XSS": {
+            "flows": 652,
+            "flagged": 311,
+            "rate": 0.477
+          }
+        },
+        "detection_delay": {
+          "Friday / Bot": {
+            "first_attack_flow": "2017-07-07 09:34:00",
+            "first_detection": "2017-07-07 10:25:00",
+            "delay_minutes": 51.0
+          },
+          "Friday / DDoS": {
+            "first_attack_flow": "2017-07-07 15:56:00",
+            "first_detection": "2017-07-07 15:56:00",
+            "delay_minutes": 0.0
+          },
+          "Friday / PortScan": {
+            "first_attack_flow": "2017-07-07 13:05:00",
+            "first_detection": "2017-07-07 14:51:00",
+            "delay_minutes": 106.0
+          },
+          "Thursday / Infiltration": {
+            "first_attack_flow": "2017-07-06 14:19:00",
+            "first_detection": "2017-07-06 14:28:00",
+            "delay_minutes": 9.0
+          },
+          "Thursday / Web Attack - Brute Force": {
+            "first_attack_flow": "2017-07-06 09:15:00",
+            "first_detection": "2017-07-06 09:18:00",
+            "delay_minutes": 3.0
+          },
+          "Thursday / Web Attack - Sql Injection": {
+            "first_attack_flow": "2017-07-06 10:40:00",
+            "first_detection": null,
+            "delay_minutes": null
+          },
+          "Thursday / Web Attack - XSS": {
+            "first_attack_flow": "2017-07-06 10:15:00",
+            "first_detection": "2017-07-06 10:16:00",
+            "delay_minutes": 1.0
+          }
+        }
+      },
+      "validation": {
+        "tp": 238590,
+        "fp": 32951,
+        "tn": 838507,
+        "fn": 26965,
+        "precision": 0.8787,
+        "recall": 0.8985,
+        "f1": 0.8884,
+        "false_positive_rate": 0.03781,
+        "fp_flows_per_hour": 1987.0,
+        "fp_per_1000_benign_flows": 37.81,
+        "fp_alert_groups": 7869,
+        "fp_alerts_per_hour": 474.51,
+        "roc_auc": 0.9762,
+        "pr_auc_average_precision": 0.8801
+      }
+    },
+    "rule_baseline": {
+      "test": {
+        "tp": 259713,
+        "fp": 55535,
+        "tn": 814746,
+        "fn": 31288,
+        "precision": 0.8238,
+        "recall": 0.8925,
+        "f1": 0.8568,
+        "false_positive_rate": 0.06381,
+        "fp_flows_per_hour": 3442.3,
+        "fp_per_1000_benign_flows": 63.81,
+        "fp_alert_groups": 365,
+        "fp_alerts_per_hour": 22.62,
+        "per_category_detection_rate": {
+          "BENIGN": {
+            "flows": 870281,
+            "flagged": 55535,
+            "rate": 0.0638
+          },
+          "Bot": {
+            "flows": 1956,
+            "flagged": 0,
+            "rate": 0.0
+          },
+          "DDoS": {
+            "flows": 128025,
+            "flagged": 109332,
+            "rate": 0.854
+          },
+          "Infiltration": {
+            "flows": 36,
+            "flagged": 2,
+            "rate": 0.0556
+          },
+          "PortScan": {
+            "flows": 158804,
+            "flagged": 150379,
+            "rate": 0.9469
+          },
+          "Web Attack - Brute Force": {
+            "flows": 1507,
+            "flagged": 0,
+            "rate": 0.0
+          },
+          "Web Attack - Sql Injection": {
+            "flows": 21,
+            "flagged": 0,
+            "rate": 0.0
+          },
+          "Web Attack - XSS": {
+            "flows": 652,
+            "flagged": 0,
+            "rate": 0.0
+          }
+        },
+        "detection_delay": {
+          "Friday / Bot": {
+            "first_attack_flow": "2017-07-07 09:34:00",
+            "first_detection": null,
+            "delay_minutes": null
+          },
+          "Friday / DDoS": {
+            "first_attack_flow": "2017-07-07 15:56:00",
+            "first_detection": "2017-07-07 15:56:00",
+            "delay_minutes": 0.0
+          },
+          "Friday / PortScan": {
+            "first_attack_flow": "2017-07-07 13:05:00",
+            "first_detection": "2017-07-07 14:51:00",
+            "delay_minutes": 106.0
+          },
+          "Thursday / Infiltration": {
+            "first_attack_flow": "2017-07-06 14:19:00",
+            "first_detection": "2017-07-06 15:23:00",
+            "delay_minutes": 64.0
+          },
+          "Thursday / Web Attack - Brute Force": {
+            "first_attack_flow": "2017-07-06 09:15:00",
+            "first_detection": null,
+            "delay_minutes": null
+          },
+          "Thursday / Web Attack - Sql Injection": {
+            "first_attack_flow": "2017-07-06 10:40:00",
+            "first_detection": null,
+            "delay_minutes": null
+          },
+          "Thursday / Web Attack - XSS": {
+            "first_attack_flow": "2017-07-06 10:15:00",
+            "first_detection": null,
+            "delay_minutes": null
+          }
+        }
+      },
+      "validation": {
+        "tp": 218183,
+        "fp": 2600,
+        "tn": 868858,
+        "fn": 47372,
+        "precision": 0.9882,
+        "recall": 0.8216,
+        "f1": 0.8972,
+        "false_positive_rate": 0.00298,
+        "fp_flows_per_hour": 156.8,
+        "fp_per_1000_benign_flows": 2.98,
+        "fp_alert_groups": 9,
+        "fp_alerts_per_hour": 0.54
+      }
+    },
+    "random_forest": {
+      "test": {
+        "tp": 128554,
+        "fp": 3206,
+        "tn": 867075,
+        "fn": 162447,
+        "precision": 0.9757,
+        "recall": 0.4418,
+        "f1": 0.6082,
+        "false_positive_rate": 0.00368,
+        "fp_flows_per_hour": 198.7,
+        "fp_per_1000_benign_flows": 3.68,
+        "fp_alert_groups": 1005,
+        "fp_alerts_per_hour": 62.29,
+        "roc_auc": 0.9533,
+        "pr_auc_average_precision": 0.8841,
+        "per_category_detection_rate": {
+          "BENIGN": {
+            "flows": 870281,
+            "flagged": 3206,
+            "rate": 0.0037
+          },
+          "Bot": {
+            "flows": 1956,
+            "flagged": 56,
+            "rate": 0.0286
+          },
+          "DDoS": {
+            "flows": 128025,
+            "flagged": 126420,
+            "rate": 0.9875
+          },
+          "Infiltration": {
+            "flows": 36,
+            "flagged": 0,
+            "rate": 0.0
+          },
+          "PortScan": {
+            "flows": 158804,
+            "flagged": 8,
+            "rate": 0.0001
+          },
+          "Web Attack - Brute Force": {
+            "flows": 1507,
+            "flagged": 1421,
+            "rate": 0.9429
+          },
+          "Web Attack - Sql Injection": {
+            "flows": 21,
+            "flagged": 15,
+            "rate": 0.7143
+          },
+          "Web Attack - XSS": {
+            "flows": 652,
+            "flagged": 634,
+            "rate": 0.9724
+          }
+        },
+        "detection_delay": {
+          "Friday / Bot": {
+            "first_attack_flow": "2017-07-07 09:34:00",
+            "first_detection": "2017-07-07 10:27:00",
+            "delay_minutes": 53.0
+          },
+          "Friday / DDoS": {
+            "first_attack_flow": "2017-07-07 15:56:00",
+            "first_detection": "2017-07-07 15:56:00",
+            "delay_minutes": 0.0
+          },
+          "Friday / PortScan": {
+            "first_attack_flow": "2017-07-07 13:05:00",
+            "first_detection": "2017-07-07 13:05:00",
+            "delay_minutes": 0.0
+          },
+          "Thursday / Infiltration": {
+            "first_attack_flow": "2017-07-06 14:19:00",
+            "first_detection": null,
+            "delay_minutes": null
+          },
+          "Thursday / Web Attack - Brute Force": {
+            "first_attack_flow": "2017-07-06 09:15:00",
+            "first_detection": "2017-07-06 09:16:00",
+            "delay_minutes": 1.0
+          },
+          "Thursday / Web Attack - Sql Injection": {
+            "first_attack_flow": "2017-07-06 10:40:00",
+            "first_detection": "2017-07-06 10:40:00",
+            "delay_minutes": 0.0
+          },
+          "Thursday / Web Attack - XSS": {
+            "first_attack_flow": "2017-07-06 10:15:00",
+            "first_detection": "2017-07-06 10:15:00",
+            "delay_minutes": 0.0
+          }
+        }
+      },
+      "validation": {
+        "tp": 239174,
+        "fp": 2843,
+        "tn": 323716,
+        "fn": 1259,
+        "precision": 0.9883,
+        "recall": 0.9948,
+        "f1": 0.9915,
+        "false_positive_rate": 0.00871,
+        "fp_flows_per_hour": 437.4,
+        "fp_per_1000_benign_flows": 8.71,
+        "fp_alert_groups": 600,
+        "fp_alerts_per_hour": 92.31,
+        "roc_auc": 0.9966,
+        "pr_auc_average_precision": 0.9912,
+        "note": "tuning block = Wednesday >= 10:40"
+      }
+    },
+    "hybrid_rf_or_rule": {
+      "test": {
+        "tp": 279393,
+        "fp": 58741,
+        "tn": 811540,
+        "fn": 11608,
+        "precision": 0.8263,
+        "recall": 0.9601,
+        "f1": 0.8882,
+        "false_positive_rate": 0.0675,
+        "fp_flows_per_hour": 3641.0,
+        "fp_per_1000_benign_flows": 67.5,
+        "fp_alert_groups": 1349,
+        "fp_alerts_per_hour": 83.62,
+        "per_category_detection_rate": {
+          "BENIGN": {
+            "flows": 870281,
+            "flagged": 58741,
+            "rate": 0.0675
+          },
+          "Bot": {
+            "flows": 1956,
+            "flagged": 56,
+            "rate": 0.0286
+          },
+          "DDoS": {
+            "flows": 128025,
+            "flagged": 126878,
+            "rate": 0.991
+          },
+          "Infiltration": {
+            "flows": 36,
+            "flagged": 2,
+            "rate": 0.0556
+          },
+          "PortScan": {
+            "flows": 158804,
+            "flagged": 150387,
+            "rate": 0.947
+          },
+          "Web Attack - Brute Force": {
+            "flows": 1507,
+            "flagged": 1421,
+            "rate": 0.9429
+          },
+          "Web Attack - Sql Injection": {
+            "flows": 21,
+            "flagged": 15,
+            "rate": 0.7143
+          },
+          "Web Attack - XSS": {
+            "flows": 652,
+            "flagged": 634,
+            "rate": 0.9724
+          }
+        },
+        "detection_delay": {
+          "Friday / Bot": {
+            "first_attack_flow": "2017-07-07 09:34:00",
+            "first_detection": "2017-07-07 10:27:00",
+            "delay_minutes": 53.0
+          },
+          "Friday / DDoS": {
+            "first_attack_flow": "2017-07-07 15:56:00",
+            "first_detection": "2017-07-07 15:56:00",
+            "delay_minutes": 0.0
+          },
+          "Friday / PortScan": {
+            "first_attack_flow": "2017-07-07 13:05:00",
+            "first_detection": "2017-07-07 13:05:00",
+            "delay_minutes": 0.0
+          },
+          "Thursday / Infiltration": {
+            "first_attack_flow": "2017-07-06 14:19:00",
+            "first_detection": "2017-07-06 15:23:00",
+            "delay_minutes": 64.0
+          },
+          "Thursday / Web Attack - Brute Force": {
+            "first_attack_flow": "2017-07-06 09:15:00",
+            "first_detection": "2017-07-06 09:16:00",
+            "delay_minutes": 1.0
+          },
+          "Thursday / Web Attack - Sql Injection": {
+            "first_attack_flow": "2017-07-06 10:40:00",
+            "first_detection": "2017-07-06 10:40:00",
+            "delay_minutes": 0.0
+          },
+          "Thursday / Web Attack - XSS": {
+            "first_attack_flow": "2017-07-06 10:15:00",
+            "first_detection": "2017-07-06 10:15:00",
+            "delay_minutes": 0.0
+          }
+        }
+      }
+    },
+    "hybrid_if_or_rule (deployed in app)": {
+      "test": {
+        "tp": 279733,
+        "fp": 116143,
+        "tn": 754138,
+        "fn": 11268,
+        "precision": 0.7066,
+        "recall": 0.9613,
+        "f1": 0.8145,
+        "false_positive_rate": 0.13345,
+        "fp_flows_per_hour": 7198.9,
+        "fp_per_1000_benign_flows": 133.45,
+        "fp_alert_groups": 6978,
+        "fp_alerts_per_hour": 432.52,
+        "per_category_detection_rate": {
+          "BENIGN": {
+            "flows": 870281,
+            "flagged": 116143,
+            "rate": 0.1335
+          },
+          "Bot": {
+            "flows": 1956,
+            "flagged": 43,
+            "rate": 0.022
+          },
+          "DDoS": {
+            "flows": 128025,
+            "flagged": 120704,
+            "rate": 0.9428
+          },
+          "Infiltration": {
+            "flows": 36,
+            "flagged": 16,
+            "rate": 0.4444
+          },
+          "PortScan": {
+            "flows": 158804,
+            "flagged": 157899,
+            "rate": 0.9943
+          },
+          "Web Attack - Brute Force": {
+            "flows": 1507,
+            "flagged": 760,
+            "rate": 0.5043
+          },
+          "Web Attack - Sql Injection": {
+            "flows": 21,
+            "flagged": 0,
+            "rate": 0.0
+          },
+          "Web Attack - XSS": {
+            "flows": 652,
+            "flagged": 311,
+            "rate": 0.477
+          }
+        },
+        "detection_delay": {
+          "Friday / Bot": {
+            "first_attack_flow": "2017-07-07 09:34:00",
+            "first_detection": "2017-07-07 10:25:00",
+            "delay_minutes": 51.0
+          },
+          "Friday / DDoS": {
+            "first_attack_flow": "2017-07-07 15:56:00",
+            "first_detection": "2017-07-07 15:56:00",
+            "delay_minutes": 0.0
+          },
+          "Friday / PortScan": {
+            "first_attack_flow": "2017-07-07 13:05:00",
+            "first_detection": "2017-07-07 14:51:00",
+            "delay_minutes": 106.0
+          },
+          "Thursday / Infiltration": {
+            "first_attack_flow": "2017-07-06 14:19:00",
+            "first_detection": "2017-07-06 14:28:00",
+            "delay_minutes": 9.0
+          },
+          "Thursday / Web Attack - Brute Force": {
+            "first_attack_flow": "2017-07-06 09:15:00",
+            "first_detection": "2017-07-06 09:18:00",
+            "delay_minutes": 3.0
+          },
+          "Thursday / Web Attack - Sql Injection": {
+            "first_attack_flow": "2017-07-06 10:40:00",
+            "first_detection": null,
+            "delay_minutes": null
+          },
+          "Thursday / Web Attack - XSS": {
+            "first_attack_flow": "2017-07-06 10:15:00",
+            "first_detection": "2017-07-06 10:16:00",
+            "delay_minutes": 1.0
+          }
+        }
+      }
+    }
+  },
+  "severity_distribution_test_hybrid": {
+    "counts": {
+      "Critical": 340179,
+      "High": 28569,
+      "Medium": 25303,
+      "Low": 1825
+    },
+    "by_truth": {
+      "attack": {
+        "Critical": 264357,
+        "High": 4248,
+        "Low": 0,
+        "Medium": 11128
+      },
+      "benign": {
+        "Critical": 75822,
+        "High": 24321,
+        "Low": 1825,
+        "Medium": 14175
+      }
+    }
+  },
+  "sensitivity_sweep": {
+    "test": [
+      {
+        "threshold": 0.5,
+        "precision": 0.5788,
+        "recall": 0.9943,
+        "f1": 0.7317,
+        "false_positive_rate": 0.24196,
+        "fp_flows_per_hour": 13051.9,
+        "flagged": 499927
+      },
+      {
+        "threshold": 0.55,
+        "precision": 0.6293,
+        "recall": 0.9932,
+        "f1": 0.7704,
+        "false_positive_rate": 0.1956,
+        "fp_flows_per_hour": 10551.3,
+        "flagged": 459239
+      },
+      {
+        "threshold": 0.6,
+        "precision": 0.6665,
+        "recall": 0.9899,
+        "f1": 0.7966,
+        "false_positive_rate": 0.16562,
+        "fp_flows_per_hour": 8934.2,
+        "flagged": 432206
+      },
+      {
+        "threshold": 0.65,
+        "precision": 0.6935,
+        "recall": 0.9794,
+        "f1": 0.812,
+        "false_positive_rate": 0.14476,
+        "fp_flows_per_hour": 7808.7,
+        "flagged": 410976
+      },
+      {
+        "threshold": 0.7,
+        "precision": 0.7107,
+        "recall": 0.9611,
+        "f1": 0.8172,
+        "false_positive_rate": 0.1308,
+        "fp_flows_per_hour": 7055.5,
+        "flagged": 393512
+      },
+      {
+        "threshold": 0.75,
+        "precision": 0.7193,
+        "recall": 0.9372,
+        "f1": 0.8139,
+        "false_positive_rate": 0.12228,
+        "fp_flows_per_hour": 6596.4,
+        "flagged": 379137
+      },
+      {
+        "threshold": 0.8,
+        "precision": 0.701,
+        "recall": 0.8028,
+        "f1": 0.7485,
+        "false_positive_rate": 0.11448,
+        "fp_flows_per_hour": 6175.4,
+        "flagged": 333235
+      },
+      {
+        "threshold": 0.85,
+        "precision": 0.6541,
+        "recall": 0.5855,
+        "f1": 0.6179,
+        "false_positive_rate": 0.10351,
+        "fp_flows_per_hour": 5583.8,
+        "flagged": 260471
+      },
+      {
+        "threshold": 0.9,
+        "precision": 0.6731,
+        "recall": 0.5327,
+        "f1": 0.5947,
+        "false_positive_rate": 0.08653,
+        "fp_flows_per_hour": 4667.7,
+        "flagged": 230332
+      },
+      {
+        "threshold": 0.95,
+        "precision": 0.7551,
+        "recall": 0.5262,
+        "f1": 0.6202,
+        "false_positive_rate": 0.05707,
+        "fp_flows_per_hour": 3078.8,
+        "flagged": 202789
+      }
+    ],
+    "validation": [
+      {
+        "threshold": 0.5,
+        "precision": 0.6042,
+        "recall": 0.9851,
+        "f1": 0.749,
+        "false_positive_rate": 0.19661,
+        "fp_flows_per_hour": 10331.7,
+        "flagged": 432920
+      },
+      {
+        "threshold": 0.55,
+        "precision": 0.6924,
+        "recall": 0.9727,
+        "f1": 0.8089,
+        "false_positive_rate": 0.13168,
+        "fp_flows_per_hour": 6919.7,
+        "flagged": 373051
+      },
+      {
+        "threshold": 0.6,
+        "precision": 0.7773,
+        "recall": 0.959,
+        "f1": 0.8586,
+        "false_positive_rate": 0.08373,
+        "fp_flows_per_hour": 4399.9,
+        "flagged": 327630
+      },
+      {
+        "threshold": 0.65,
+        "precision": 0.8348,
+        "recall": 0.933,
+        "f1": 0.8811,
+        "false_positive_rate": 0.05627,
+        "fp_flows_per_hour": 2956.9,
+        "flagged": 296789
+      },
+      {
+        "threshold": 0.7,
+        "precision": 0.8787,
+        "recall": 0.8985,
+        "f1": 0.8884,
+        "false_positive_rate": 0.03781,
+        "fp_flows_per_hour": 1987.0,
+        "flagged": 271541
+      },
+      {
+        "threshold": 0.75,
+        "precision": 0.9025,
+        "recall": 0.8504,
+        "f1": 0.8757,
+        "false_positive_rate": 0.028,
+        "fp_flows_per_hour": 1471.2,
+        "flagged": 250220
+      },
+      {
+        "threshold": 0.8,
+        "precision": 0.9177,
+        "recall": 0.7495,
+        "f1": 0.8251,
+        "false_positive_rate": 0.02049,
+        "fp_flows_per_hour": 1076.8,
+        "flagged": 216883
+      },
+      {
+        "threshold": 0.85,
+        "precision": 0.9244,
+        "recall": 0.5564,
+        "f1": 0.6947,
+        "false_positive_rate": 0.01386,
+        "fp_flows_per_hour": 728.4,
+        "flagged": 159846
+      },
+      {
+        "threshold": 0.9,
+        "precision": 0.8933,
+        "recall": 0.1976,
+        "f1": 0.3236,
+        "false_positive_rate": 0.00719,
+        "fp_flows_per_hour": 377.8,
+        "flagged": 58737
+      },
+      {
+        "threshold": 0.95,
+        "precision": 0.4493,
+        "recall": 0.0084,
+        "f1": 0.0164,
+        "false_positive_rate": 0.00312,
+        "fp_flows_per_hour": 164.0,
+        "flagged": 4939
+      }
+    ],
+    "random_forest_test": [
+      {
+        "threshold": 0.5,
+        "precision": 0.9235,
+        "recall": 0.4431,
+        "f1": 0.5989,
+        "false_positive_rate": 0.01228,
+        "fp_flows_per_hour": 662.4,
+        "flagged": 139641
+      },
+      {
+        "threshold": 0.55,
+        "precision": 0.9474,
+        "recall": 0.4427,
+        "f1": 0.6035,
+        "false_positive_rate": 0.00821,
+        "fp_flows_per_hour": 443.1,
+        "flagged": 135987
+      },
+      {
+        "threshold": 0.6,
+        "precision": 0.964,
+        "recall": 0.4425,
+        "f1": 0.6066,
+        "false_positive_rate": 0.00552,
+        "fp_flows_per_hour": 298.0,
+        "flagged": 133583
+      },
+      {
+        "threshold": 0.65,
+        "precision": 0.9705,
+        "recall": 0.4421,
+        "f1": 0.6075,
+        "false_positive_rate": 0.00449,
+        "fp_flows_per_hour": 242.2,
+        "flagged": 132570
+      },
+      {
+        "threshold": 0.7,
+        "precision": 0.9757,
+        "recall": 0.4418,
+        "f1": 0.6082,
+        "false_positive_rate": 0.00368,
+        "fp_flows_per_hour": 198.7,
+        "flagged": 131760
+      },
+      {
+        "threshold": 0.75,
+        "precision": 0.9874,
+        "recall": 0.2619,
+        "f1": 0.414,
+        "false_positive_rate": 0.00112,
+        "fp_flows_per_hour": 60.2,
+        "flagged": 77185
+      },
+      {
+        "threshold": 0.8,
+        "precision": 0.9952,
+        "recall": 0.1633,
+        "f1": 0.2806,
+        "false_positive_rate": 0.00027,
+        "fp_flows_per_hour": 14.3,
+        "flagged": 47757
+      },
+      {
+        "threshold": 0.85,
+        "precision": 0.9996,
+        "recall": 0.1589,
+        "f1": 0.2742,
+        "false_positive_rate": 2e-05,
+        "fp_flows_per_hour": 1.2,
+        "flagged": 46268
+      },
+      {
+        "threshold": 0.9,
+        "precision": 0.9994,
+        "recall": 0.0058,
+        "f1": 0.0115,
+        "false_positive_rate": 0.0,
+        "fp_flows_per_hour": 0.1,
+        "flagged": 1686
+      },
+      {
+        "threshold": 0.95,
+        "precision": 1.0,
+        "recall": 0.0002,
+        "f1": 0.0004,
+        "false_positive_rate": 0.0,
+        "fp_flows_per_hour": 0.0,
+        "flagged": 56
+      }
+    ],
+    "random_forest_tune": [
+      {
+        "threshold": 0.5,
+        "precision": 0.9685,
+        "recall": 0.9967,
+        "f1": 0.9824,
+        "false_positive_rate": 0.02386,
+        "fp_flows_per_hour": 1198.6,
+        "flagged": 247437
+      },
+      {
+        "threshold": 0.55,
+        "precision": 0.9737,
+        "recall": 0.9958,
+        "f1": 0.9846,
+        "false_positive_rate": 0.01984,
+        "fp_flows_per_hour": 996.8,
+        "flagged": 245904
+      },
+      {
+        "threshold": 0.6,
+        "precision": 0.9784,
+        "recall": 0.9957,
+        "f1": 0.987,
+        "false_positive_rate": 0.01616,
+        "fp_flows_per_hour": 811.8,
+        "flagged": 244665
+      },
+      {
+        "threshold": 0.65,
+        "precision": 0.9842,
+        "recall": 0.9955,
+        "f1": 0.9898,
+        "false_positive_rate": 0.01177,
+        "fp_flows_per_hour": 591.1,
+        "flagged": 243182
+      },
+      {
+        "threshold": 0.7,
+        "precision": 0.9883,
+        "recall": 0.9948,
+        "f1": 0.9915,
+        "false_positive_rate": 0.00871,
+        "fp_flows_per_hour": 437.4,
+        "flagged": 242017
+      },
+      {
+        "threshold": 0.75,
+        "precision": 0.9924,
+        "recall": 0.6936,
+        "f1": 0.8165,
+        "false_positive_rate": 0.00392,
+        "fp_flows_per_hour": 196.8,
+        "flagged": 168047
+      },
+      {
+        "threshold": 0.8,
+        "precision": 0.9903,
+        "recall": 0.2963,
+        "f1": 0.4562,
+        "false_positive_rate": 0.00214,
+        "fp_flows_per_hour": 107.7,
+        "flagged": 71949
+      },
+      {
+        "threshold": 0.85,
+        "precision": 0.9947,
+        "recall": 0.2891,
+        "f1": 0.448,
+        "false_positive_rate": 0.00113,
+        "fp_flows_per_hour": 56.8,
+        "flagged": 69875
+      },
+      {
+        "threshold": 0.9,
+        "precision": 0.9638,
+        "recall": 0.0186,
+        "f1": 0.0365,
+        "false_positive_rate": 0.00051,
+        "fp_flows_per_hour": 25.8,
+        "flagged": 4645
+      },
+      {
+        "threshold": 0.95,
+        "precision": 1.0,
+        "recall": 0.0009,
+        "f1": 0.0019,
+        "false_positive_rate": 0.0,
+        "fp_flows_per_hour": 0.0,
+        "flagged": 226
+      }
+    ]
+  },
+  "failure_cases": [
+    {
+      "kind": "False negative (missed attack)",
+      "observed_at": "2017-07-07 16:03:00",
+      "src_ip": "172.16.0.1",
+      "dst_ip": "192.168.10.50",
+      "dst_port": 80,
+      "true_label": "DDoS",
+      "risk": 0.698,
+      "top_features": [
+        {
+          "feature": "flows source->destination (60s)",
+          "z": 1.4,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": -1.3,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "pkt len mean",
+          "z": 1.1,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False negative (missed attack)",
+      "observed_at": "2017-07-07 16:05:00",
+      "src_ip": "172.16.0.1",
+      "dst_ip": "192.168.10.50",
+      "dst_port": 80,
+      "true_label": "DDoS",
+      "risk": 0.696,
+      "top_features": [
+        {
+          "feature": "flows source->destination (60s)",
+          "z": 1.3,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": -1.3,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "pkt len mean",
+          "z": 1.2,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False negative (missed attack)",
+      "observed_at": "2017-07-07 16:15:00",
+      "src_ip": "172.16.0.1",
+      "dst_ip": "192.168.10.50",
+      "dst_port": 80,
+      "true_label": "DDoS",
+      "risk": 0.69,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": -1.3,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "bwd packets",
+          "z": -1.2,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "flows source->destination (60s)",
+          "z": 1.1,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False negative (missed attack)",
+      "observed_at": "2017-07-07 16:02:00",
+      "src_ip": "172.16.0.1",
+      "dst_ip": "192.168.10.50",
+      "dst_port": 80,
+      "true_label": "DDoS",
+      "risk": 0.678,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": -1.3,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "flows source->destination (60s)",
+          "z": 1.2,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "pkt len mean",
+          "z": 1.1,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False negative (missed attack)",
+      "observed_at": "2017-07-07 16:14:00",
+      "src_ip": "172.16.0.1",
+      "dst_ip": "192.168.10.50",
+      "dst_port": 80,
+      "true_label": "DDoS",
+      "risk": 0.596,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": -1.3,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "bwd packets",
+          "z": -1.2,
+          "direction": "low",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "fwd packets",
+          "z": 0.9,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False positive (benign flagged)",
+      "observed_at": "2017-07-06 15:42:00",
+      "src_ip": "192.168.10.8",
+      "dst_ip": "192.168.10.5",
+      "dst_port": 4224,
+      "true_label": "BENIGN",
+      "risk": 0.917,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": 10.0,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "flows source->destination (60s)",
+          "z": 1.7,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "flows from source (60s)",
+          "z": 1.2,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False positive (benign flagged)",
+      "observed_at": "2017-07-07 12:04:00",
+      "src_ip": "192.168.10.50",
+      "dst_ip": "255.255.255.255",
+      "dst_port": 1124,
+      "true_label": "BENIGN",
+      "risk": 0.701,
+      "top_features": [
+        {
+          "feature": "fwd packets",
+          "z": 1.9,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": 1.8,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "packet rate",
+          "z": 1.2,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False positive (benign flagged)",
+      "observed_at": "2017-07-07 16:13:00",
+      "src_ip": "192.168.10.50",
+      "dst_ip": "172.16.0.1",
+      "dst_port": 62511,
+      "true_label": "BENIGN",
+      "risk": 0.804,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": 3.7,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "fwd bytes",
+          "z": 2.2,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "bwd packets",
+          "z": 1.4,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False positive (benign flagged)",
+      "observed_at": "2017-07-06 15:40:00",
+      "src_ip": "192.168.10.8",
+      "dst_ip": "192.168.10.19",
+      "dst_port": 3905,
+      "true_label": "BENIGN",
+      "risk": 0.871,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": 8.2,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "flows source->destination (60s)",
+          "z": 1.3,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "fwd bytes",
+          "z": -1.1,
+          "direction": "low",
+          "method": "feature deviation"
+        }
+      ]
+    },
+    {
+      "kind": "False positive (benign flagged)",
+      "observed_at": "2017-07-07 16:10:00",
+      "src_ip": "192.168.10.50",
+      "dst_ip": "172.16.0.1",
+      "dst_port": 57648,
+      "true_label": "BENIGN",
+      "risk": 0.943,
+      "top_features": [
+        {
+          "feature": "destination-port variety from source (60s)",
+          "z": 7.2,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "fwd bytes",
+          "z": 2.3,
+          "direction": "high",
+          "method": "feature deviation"
+        },
+        {
+          "feature": "bwd packets",
+          "z": 1.3,
+          "direction": "high",
+          "method": "feature deviation"
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "fp_per_hour": "fp_flows_per_hour = false-positive flows / capture hours of the split (timestamps from the dataset). fp_alerts_per_hour groups flagged benign flows by (src, dst, category, 10-min window) like the app's de-duplication.",
+    "detection_delay": "minutes from first attack flow to first flagged attack flow per (day, label); CIC-IDS2017 timestamps have 1-minute resolution on these days.",
+    "risk_scale": "piecewise-linear transform of Isolation Forest score; not a probability."
+  },
+  "runtime_seconds": 207.9
+}

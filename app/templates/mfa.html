@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}Verify{% endblock %}
+{% block content %}{% from "_icons.html" import icon %}
+<div class="auth"><div class="card">
+<div class="auth-brand"><span class="logo">{{ icon('shield') }}</span><b>SentinelSMB</b><span class="muted small">AI-driven network threat detection</span></div>
+<div class="steps"><span>1 · Password</span><span class="on">2 · Authenticator</span></div>
+<h1>Two-factor verification</h1>
+<p class="muted">Enter the 6-digit code from your authenticator app. This step expires two minutes after your password was accepted.</p>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <label for="code">Authenticator code</label>{{ form.code(id="code", inputmode="numeric", autocomplete="one-time-code", maxlength=6, autofocus=true, **{"aria-describedby": "code-help"}) }}<div id="code-help" class="small muted" style="margin-top:6px">6 digits, refreshes every 30 seconds.</div>
+  <button type="submit">{{ icon('key') }}<span>Verify</span></button>
+  {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+</form>
+<p class="small"><a href="{{ url_for('auth.login') }}">Start again</a></p>
+<div class="trust"><span>{{ icon('lock') }}Encrypted session</span><span>{{ icon('key') }}TOTP MFA</span><span>{{ icon('file') }}Audited sign-ins</span></div>
+</div></div>
+{% endblock %}

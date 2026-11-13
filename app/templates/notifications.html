@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Notifications &amp; privacy</h1>
+<p class="page-sub">UC-05 Configure alert notifications: who gets alert emails and SMS, the minimum severity, the grouping window, and how IP addresses are shown.</p></div></div>
+<div class="grid charts">
+<div class="card"><h2>Settings</h2>
+<form method="post" class="stack">{{ form.hidden_tag() }}<input type="hidden" name="revision" value="{{ revision }}">
+<div class="field" style="width:100%"><label for="recipients">{{ form.recipients.label.text }}</label>{{ form.recipients(rows=4, cols=40, id="recipients") }}</div>
+<div class="field"><label for="min_severity">{{ form.min_severity.label.text }}</label>{{ form.min_severity(id="min_severity") }}</div>
+<div class="field"><label for="grouping">{{ form.grouping.label.text }}</label>{{ form.grouping(id="grouping", min=5, max=60) }}</div>
+<div class="row"><button type="submit">Save settings</button><a class="btn secondary" href="{{ url_for('admin.notifications') }}">Cancel</a></div></form>
+<form method="post" action="{{ url_for('admin.test_email') }}" style="margin-top:10px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary" type="submit">Send test email</button></form>
+</div>
+<div class="card" id="sms"><h2>SMS alerts</h2>
+<p class="small">FR-10 / UC-05 A2: a short SMS (severity, category, time and a link - no IP addresses) for alerts at or above the SMS minimum severity. Same de-duplication rules as email; SMS problems never affect email.</p>
+<p class="small"><b>Gateway:</b> {% if sms_info.mode == 'twilio' %}<span class="pill ok">Twilio configured</span> sending from {{ sms_info.from_number }}{% else %}<span class="pill warn">Demo outbox</span> {{ sms_info.why }} - messages are written to <code>instance/sms_outbox/</code>{% endif %}<br>
+<span class="muted">Credentials are read from <code>.env</code> only:
+{% for k, ok in sms_info.credentials.items() %}{{ k }} {{ 'set' if ok else 'not set' }}{{ ', ' if not loop.last }}{% endfor %}.</span></p>
+<form method="post" action="{{ url_for('admin.sms_settings') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="revision" value="{{ revision }}">
+<label style="font-weight:500"><input type="checkbox" name="sms_enabled" {{ 'checked' if sms_info.enabled }}> Send SMS alerts</label>
+<div class="field" style="width:100%"><label for="sms-numbers">Mobile numbers (international format, comma-separated, max {{ sms_info.max_numbers }})</label>
+<input id="sms-numbers" name="sms_numbers" value="{{ sms_info.numbers|join(', ') }}" placeholder="+61412345678" inputmode="tel" autocomplete="off" aria-describedby="sms-help">
+<span id="sms-help" class="small muted">E.164, e.g. +61412345678. An Australian mobile like 0412 345 678 is converted automatically.</span></div>
+<div class="field"><label for="sms-sev">Minimum severity for SMS</label><select id="sms-sev" name="sms_min_severity">{% for v in ['Critical', 'High'] %}<option value="{{ v }}" {{ 'selected' if sms_info.min_severity == v }}>{{ v }}{{ ' (recommended)' if v == 'Critical' }}</option>{% endfor %}</select></div>
+<div class="row"><button type="submit">Save SMS settings</button><a class="btn secondary" href="{{ url_for('admin.notifications') }}">Cancel</a></div></form>
+<form method="post" action="{{ url_for('admin.test_sms') }}" style="margin-top:10px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary" type="submit" {{ 'disabled' if not sms_info.numbers }}>Send test SMS</button>{% if not sms_info.numbers %} <span class="small muted">Save a mobile number first.</span>{% endif %}</form>
+</div>
+<div class="card"><h2>Policy</h2><ul class="small">
+<li><b>Critical</b>: emailed immediately. <b>High</b>: included in a periodic summary email (every {{ config.DIGEST_INTERVAL_MINUTES }} min).</li>
+<li>At most one email per alert every {{ config.EMAIL_PER_ALERT_MINUTES }} minutes unless its severity rises.</li>
+<li>At most {{ config.EMAIL_MAX_PER_HOUR }} emails per hour overall; extra alerts roll into the next summary.</li>
+<li>Suppressed emails are recorded below. Emails contain alert facts only - never raw log content.</li>
+<li><b>SMS</b>: at most one per alert every {{ sms_info.per_alert }} minutes unless its severity rises, and at most {{ sms_info.per_hour }} per hour; extra alerts are recorded as suppressed (email still covers them).</li>
+<li>Transport: {% if config.SMTP_HOST %}SMTP {{ config.SMTP_HOST }}:{{ config.SMTP_PORT }}{% else %}<b>dev outbox</b> (SMTP_HOST not set; .eml files written to <code>instance/outbox/</code>){% endif %}</li></ul></div>
+<div class="card"><h2>IP address privacy</h2>
+<form method="post" action="{{ url_for('admin.privacy') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="field"><label for="ipm">Show IP addresses in the dashboard and map as</label>
+<select id="ipm" name="ip_display_mode">{% for k, v in [('full','Full address'),('truncate','Truncated (/24, e.g. 192.168.10.x)'),('hash','Pseudonym (keyed hash, e.g. ip-3f9a1c0d2b)')] %}<option value="{{ k }}" {{ 'selected' if ip_mode==k }}>{{ v }}</option>{% endfor %}</select></div>
+<div class="field"><label for="llm">IP addresses sent to the AI report generator</label>
+<select id="llm" name="llm_ip_mode">{% for k, v in [('hash','Pseudonym (keyed hash)'),('truncate','Truncated (/24)')] %}<option value="{{ k }}" {{ 'selected' if llm_ip_mode==k }}>{{ v }}</option>{% endfor %}</select></div>
+<button type="submit">Save privacy settings</button></form>
+<p class="small muted">Full IP addresses are never sent to the LLM. Changes are audit-logged.</p></div>
+</div>
+<h2 id="log">Notification log (latest 100)</h2>
+<div class="card"><table><thead><tr><th>#</th><th>Created</th><th>Channel</th><th>Kind</th><th>Alert</th><th>Status</th><th>Attempts</th><th>Reason / error</th><th>Subject</th></tr></thead><tbody>
+{% for n in log %}<tr><td>{{ n.id }}</td><td>{{ n.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{% if n.channel == 'SMS' %}<span class="pill info">SMS</span>{% else %}{{ n.channel or 'Email' }}{% endif %}</td><td>{{ n.kind }}</td><td>{% if n.alert_id %}<a href="{{ url_for('dash.alert_detail', alert_id=n.alert_id) }}">#{{ n.alert_id }}</a>{% endif %}</td><td>{{ n.status }}</td><td>{{ n.attempts }}</td><td class="small">{{ n.reason or n.error or '' }}</td><td><a href="{{ url_for('admin.notification_detail', nid=n.id) }}">{{ n.subject }}</a></td></tr>
+{% else %}<tr><td colspan="9" class="muted">No notifications yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

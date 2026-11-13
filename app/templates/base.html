@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>{% block title %}Threat Dashboard{% endblock %} · SMB Threat Detection</title>
+<script src="{{ url_for('static', filename='theme-init.js') }}"></script>
+<link rel="preload" href="{{ url_for('static', filename='vendor/inter/InterVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">{% block head %}{% endblock %}
+</head>
+{% from "_icons.html" import icon %}
+{% set ep = request.endpoint or '' %}
+<body class="{{ 'app' if current_user.is_authenticated else 'auth-page' }}" data-endpoint="{{ ep }}">
+<a class="skip" href="#main">Skip to content</a>
+{% if current_user.is_authenticated %}
+<aside class="sidebar" id="sidebar" aria-label="Main navigation"><div class="side-inner">
+  <a class="brand" href="{{ url_for('dash.overview') }}">
+    <span class="logo">{{ icon('shield') }}</span>
+    <span><b>SentinelSMB</b><small>Threat Detection SOC</small></span>
+  </a>
+  <nav>
+    {% macro nav(endpoint, label, ico, active) %}<a href="{{ url_for(endpoint) }}" class="{{ 'active' if active }}" {% if active %}aria-current="page"{% endif %}>{{ icon(ico) }}<span>{{ label }}</span></a>{% endmacro %}
+    <div class="nav-h">Monitor</div>
+    {{ nav('dash.overview', 'Overview', 'overview', ep=='dash.overview') }}
+    {{ nav('dash.events', 'Flagged events', 'flag', ep=='dash.events') }}
+    {{ nav('dash.alerts', 'Alerts', 'bell', ep.startswith('dash.alert')) }}
+    {{ nav('inc.incidents', 'Incidents', 'file', ep.startswith('inc.')) }}
+    {{ nav('dash.geo_map', 'Threat map', 'globe', ep=='dash.geo_map') }}
+    <div class="nav-h">Intelligence</div>
+    {{ nav('dash.models', 'Models', 'brain', ep=='dash.models') }}
+    {{ nav('dash.sources', 'Data sources', 'upload', ep in ('dash.sources','dash.upload')) }}
+    {{ nav('sim.simulator', 'Simulator', 'play', ep in ('sim.simulator', 'sim.run_detail')) }}
+    {{ nav('dash.datasets', 'Datasets', 'database', ep=='dash.datasets') }}
+    <div class="nav-h">Administration</div>
+    {{ nav('admin.notifications', 'Notifications', 'mail', ep.startswith('admin.notification')) }}
+    {{ nav('admin.users', 'Users', 'users', ep=='admin.users') }}
+    {{ nav('admin.audit_log', 'Audit log', 'list', ep=='admin.audit_log') }}
+    {{ nav('admin.style_guide', 'Style guide', 'palette', ep=='admin.style_guide') }}
+  </nav>
+  <div class="side-foot small">Isolation Forest · Random Forest · Rules<br><span class="muted">CIC-IDS2017 evaluation · <a href="{{ url_for('admin.style_guide') }}">UI style guide</a></span></div>
+</div></aside>
+<header class="topbar">
+  <button class="icon-btn menu-btn" id="menu-btn" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">{{ icon('menu') }}</button>
+  <div class="live" id="live" role="status" aria-live="polite"><span class="pulse"></span><span id="live-text">Connecting…</span></div>
+  <span class="spacer"></span>
+  <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch light/dark theme" title="Switch light/dark theme"><span class="i-dark">{{ icon('moon') }}</span><span class="i-light">{{ icon('sun') }}</span></button>
+  <span class="user-chip" title="Signed in as {{ current_user.email }}"><span class="avatar">{{ current_user.email[:1]|upper }}</span><span class="small">{{ current_user.email }}</span></span>
+  <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary btn-sm" type="submit">{{ icon('logout') }}<span>Log out</span></button></form>
+</header>
+{% else %}
+<div class="auth-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grid-lines"></span></div>
+{% endif %}
+<main id="main" tabindex="-1">
+{% if email_failures %}<div class="banner">{{ icon('alert') }} {{ email_failures }} alert email(s) failed in the last 24 h. <a href="{{ url_for('admin.notifications') }}">View notification log</a></div>{% endif %}
+{% if sms_failures %}<div class="banner">{{ icon('alert') }} {{ sms_failures }} SMS alert(s) were not delivered in the last 24 h. Email alerts are not affected. <a href="{{ url_for('admin.notifications') }}#log">View notification log</a></div>{% endif %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="status">{{ m }}</div>{% endfor %}{% endwith %}
+{% block content %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

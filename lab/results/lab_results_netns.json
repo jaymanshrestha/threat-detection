@@ -1,0 +1,104 @@
+{
+  "pcap": "lab/captures/netns_lab.pcap",
+  "flows": 3117,
+  "packet_stats": {
+    "packets_total": 8592,
+    "packets_non_ip": 0,
+    "packets_malformed": 0
+  },
+  "labels": {
+    "flood": 1999,
+    "scan": 1025,
+    "benign": 93
+  },
+  "lab_mode": "network namespace (unshare -rn), loopback only - Docker not used",
+  "detectors": {
+    "rule_baseline": {
+      "per_phase": {
+        "benign": {
+          "flows": 93,
+          "flagged": 13,
+          "rate": 0.1398
+        },
+        "flood": {
+          "flows": 1999,
+          "flagged": 1999,
+          "rate": 1.0
+        },
+        "scan": {
+          "flows": 1025,
+          "flagged": 294,
+          "rate": 0.2868
+        }
+      },
+      "precision": 0.9944,
+      "recall": 0.7583,
+      "categories": {
+        "Port Scan": 2306
+      }
+    },
+    "isolation_forest": {
+      "per_phase": {
+        "benign": {
+          "flows": 93,
+          "flagged": 42,
+          "rate": 0.4516
+        },
+        "flood": {
+          "flows": 1999,
+          "flagged": 1999,
+          "rate": 1.0
+        },
+        "scan": {
+          "flows": 1025,
+          "flagged": 1020,
+          "rate": 0.9951
+        }
+      },
+      "precision": 0.9863,
+      "recall": 0.9983,
+      "categories": {
+        "Anomaly - unclassified": 3061
+      }
+    },
+    "random_forest": {
+      "per_phase": {
+        "benign": {
+          "flows": 93,
+          "flagged": 0,
+          "rate": 0.0
+        },
+        "flood": {
+          "flows": 1999,
+          "flagged": 0,
+          "rate": 0.0
+        },
+        "scan": {
+          "flows": 1025,
+          "flagged": 0,
+          "rate": 0.0
+        }
+      },
+      "precision": null,
+      "recall": 0.0,
+      "categories": {}
+    },
+    "hybrid_if_or_rule": {
+      "per_phase": {
+        "benign": {
+          "flows": 93,
+          "flagged": 42
+        },
+        "flood": {
+          "flows": 1999,
+          "flagged": 1999
+        },
+        "scan": {
+          "flows": 1025,
+          "flagged": 1020
+        }
+      },
+      "recall": 0.9983
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}{% block title %}Overview{% endblock %}
+{% from "_icons.html" import icon %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Network overview</h1><p class="page-sub">UC-03 Monitor the real-time dashboard: ingested flows, anomaly detections, de-duplicated alerts and incidents.</p></div>
+  <div class="row" style="margin-bottom:16px;align-items:flex-end">
+  <div class="field"><label for="range">Time range (relative to newest event)</label>
+  <select id="range"><option value="15m">Last 15 minutes</option><option value="1h">Last hour</option><option value="24h">Last 24 hours</option><option value="7d">Last 7 days</option><option value="all" selected>All data</option><option value="custom">Custom range…</option></select></div>
+  <div class="field hidden" id="custom-from-f"><label for="custom-from">From</label><input type="datetime-local" id="custom-from"></div>
+  <div class="field hidden" id="custom-to-f"><label for="custom-to">To</label><input type="datetime-local" id="custom-to"></div>
+  <button type="button" class="secondary hidden" id="custom-apply">Apply range</button>
+  </div>
+</div>
+<div id="range-error" class="flash danger hidden" role="alert"></div>
+<div id="conn-banner" class="banner hidden" role="status"></div>
+
+{% macro chart(id, cid, title, label) %}<div class="card" data-widget="{{ id }}"><h2>{{ title }}</h2><div class="chart-box"><canvas id="{{ cid }}" role="img" aria-label="Chart: {{ label }}"></canvas></div></div>{% endmacro %}
+<div class="grid charts" id="widgets">
+{% for wid, title, visible in layout if visible %}
+{% if wid == 'tiles' %}
+<div class="grid tiles" data-widget="tiles" style="grid-column:1/-1">
+  <div class="card tile t-green"><div class="top"><div class="l">Ingest status</div><span class="ic">{{ icon('activity') }}</span></div>
+    <div class="v ok" id="t-status">-</div><div class="small muted">last received <span id="t-last">-</span> · updates: <span id="t-live">connecting…</span></div></div>
+  <div class="card tile t-cyan"><div class="top"><div class="l">Events</div><span class="ic">{{ icon('layers') }}</span></div>
+    <div class="v" id="t-events">-</div><div class="meta"><span class="trend info flat hidden" id="tr-events" title="Events in the newest minute of the chart vs the minute before"></span><span>newest flow <span id="t-latest">-</span></span></div></div>
+  <div class="card tile t-amber"><div class="top"><div class="l">Flagged events</div><span class="ic">{{ icon('flag') }}</span></div>
+    <div class="v" id="t-flagged">-</div><div class="meta"><span class="trend flat hidden" id="tr-flagged" title="Flagged events in the newest minute of the chart vs the minute before"></span><span>flag rate <span id="t-rate">-</span></span></div></div>
+  <div class="card tile t-violet"><div class="top"><div class="l">Alerts (de-duplicated)</div><span class="ic">{{ icon('bell') }}</span></div>
+    <div class="v" id="t-alerts">-</div><div class="meta"><span class="trend flat hidden" id="tr-alerts" title="Change since the previous update on this page"></span><span>detections → alerts <span id="t-grouped">-</span></span></div></div>
+  <div class="card tile t-red"><div class="top"><div class="l">Open critical alerts</div><span class="ic">{{ icon('flame') }}</span></div>
+    <div class="v crit" id="t-crit">-</div><div class="small muted">sensitivity {{ '%.2f'|format(threshold) }}</div></div>
+  <div class="card tile t-blue"><div class="top"><div class="l">Replay simulator</div><span class="ic">{{ icon('play') }}</span></div>
+    <div class="small" id="t-replay" style="margin-top:10px;font-weight:600">-</div><div class="small muted" style="margin-top:6px">replayed data is labelled <span class="sim">SIMULATED</span> · <a href="{{ url_for('sim.simulator') }}">Simulator</a></div></div>
+</div>
+{% elif wid == 'traffic' %}{{ chart(wid, 'c-events', title, 'Events per minute') }}
+{% elif wid == 'anomalies' %}{{ chart(wid, 'c-flagged', title, 'Flagged events per minute') }}
+{% elif wid == 'severity' %}{{ chart(wid, 'c-sev', title, 'Flagged events by severity') }}
+{% elif wid == 'categories' %}{{ chart(wid, 'c-cat', title, 'Alerts by category') }}
+{% elif wid == 'ports' %}{{ chart(wid, 'c-ports', 'Top destination ports (flagged)', 'Top destination ports') }}
+{% elif wid == 'sources' %}{{ chart(wid, 'c-srcs', 'Top source IPs (flagged)', 'Top source IPs') }}
+{% elif wid == 'model' %}
+<div class="card" data-widget="model"><h2>Detection model</h2>
+<div class="facts-grid"><div><span class="k">Active model</span>{{ model.name }}</div><div><span class="k">Sensitivity threshold</span>{{ '%.2f'|format(model.threshold) }}</div>
+<div><span class="k">Test precision</span>{{ model.precision if model.precision is not none else '-' }}</div><div><span class="k">Test recall</span>{{ model.recall if model.recall is not none else '-' }}</div>
+<div><span class="k">Test F1</span>{{ model.f1 if model.f1 is not none else '-' }}</div><div><span class="k">False-positive alerts / hour</span>{{ model.fp_per_hour if model.fp_per_hour is not none else '-' }}</div></div>
+<p class="small"><a href="{{ url_for('dash.models') }}">Model evaluation and sensitivity →</a>{% if model.generated %} <span class="muted">· evaluated {{ model.generated[:10] }}</span>{% endif %}</p></div>
+{% elif wid == 'incidents' %}
+<div class="card" data-widget="incidents"><h2>Incident timeline</h2>
+<ol class="timeline" id="inc-timeline" aria-label="Latest incidents, newest first"><li class="muted">Loading…</li></ol>
+<p class="small"><a href="{{ url_for('inc.incidents') }}">All incidents →</a></p></div>
+{% elif wid == 'latest' %}
+<div class="card" data-widget="latest" style="grid-column:1/-1"><h2>Latest alerts</h2>
+<table><thead><tr><th scope="col">Severity</th><th scope="col">Category</th><th scope="col">Source → destination</th><th scope="col">Occurrences</th><th scope="col">Last seen</th></tr></thead><tbody id="recent"></tbody></table>
+<p class="small"><a href="{{ url_for('dash.alerts') }}">All alerts →</a></p></div>
+{% endif %}
+{% endfor %}
+</div>
+
+<details class="card" style="margin-top:16px" id="layout-editor"><summary><b>Customise layout</b> <span class="small muted">- show, hide and reorder widgets (saved for your account)</span></summary>
+<form method="post" action="{{ url_for('dash.save_layout') }}" style="margin-top:12px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<ol class="layout-list">{% for wid, title, visible in layout %}<li><input type="hidden" name="widget" value="{{ wid }}">
+<label class="grow" style="font-weight:500"><input type="checkbox" name="show" value="{{ wid }}" {{ 'checked' if visible }}> {{ title }}</label>
+<label for="pos-{{ wid }}" class="small">Position</label><input id="pos-{{ wid }}" type="number" name="pos_{{ wid }}" min="1" max="{{ widgets|length }}" value="{{ loop.index }}"></li>{% endfor %}</ol>
+<div class="row" style="margin-top:12px"><button type="submit">Save layout</button><a class="btn secondary" href="{{ url_for('dash.overview') }}">Cancel</a></div></form>
+<form method="post" action="{{ url_for('dash.reset_layout') }}" style="margin-top:8px" data-confirm="Reset the dashboard to the default layout?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary btn-sm">Reset to default layout</button></form>
+</details>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script><script src="{{ url_for('static', filename='dashboard.js') }}"></script>{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block title %}Datasets{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Datasets</h1>
+<p class="page-sub">Stored datasets with their origin and licence (UC-02). Public datasets are used for training and evaluation and cannot be deleted; lab captures need a written authorisation reference.</p></div>
+<a class="btn" href="{{ url_for('sim.simulator') }}">Open the Simulator</a></div>
+<div class="card"><table><caption class="sr-only">Stored datasets</caption><thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Origin</th><th scope="col">Licence / terms</th><th scope="col">Citation / authorisation</th><th scope="col">Size</th><th scope="col">Actions</th></tr></thead><tbody>
+{% for d in datasets %}{% set pub = d.is_public or (d.kind or 'public') == 'public' %}<tr><td><b>{{ d.name }}</b></td><td>{{ 'Public' if pub else (d.kind or 'lab')|capitalize }}</td><td class="small">{{ d.origin }}</td><td class="small">{{ d.licence }}</td>
+<td class="small">{{ d.citation or ('Authorisation: ' ~ d.authorisation_ref if d.authorisation_ref else '-') }}</td><td class="small">{{ d.size_info }}</td>
+<td>{% if pub %}<span class="muted small">Public - cannot be deleted</span>{% else %}<form method="post" action="{{ url_for('sim.delete_dataset', ds_id=d.id) }}" data-confirm="Delete dataset {{ d.name }} and its stored file? Earlier replay results are kept."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="danger btn-sm" aria-label="Delete dataset {{ d.name }}">Delete</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+
+<h2 id="lab">Register a lab capture</h2>
+<div class="card"><form method="post" action="{{ url_for('sim.register_lab') }}" enctype="multipart/form-data" class="stack" data-confirm="Store this lab capture as a replay dataset?">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row">
+<div class="field"><label for="lab-name">Name</label><input id="lab-name" name="name" maxlength="128" required placeholder="e.g. Lab port scan 2026-09"></div>
+<div class="field"><label for="lab-auth">Authorisation reference</label><input id="lab-auth" name="authorisation_ref" maxlength="255" required placeholder="e.g. Email approval from supervisor, 3 Sep 2026"></div>
+</div>
+<div class="field"><label for="lab-origin">Origin (where and how it was captured)</label><input id="lab-origin" name="origin" maxlength="500" required placeholder="Isolated Docker lab, Kali -> Ubuntu target, CICFlowMeter export"></div>
+<div class="field"><label for="lab-licence">Licence / terms (optional)</label><input id="lab-licence" name="licence" maxlength="500" placeholder="Internal lab capture - not for redistribution"></div>
+<div class="field"><label for="lab-file">Flow CSV file (CIC-IDS2017 / CICFlowMeter format)</label><input id="lab-file" name="file" type="file" accept=".csv" required></div>
+<div class="row"><button type="submit">Register lab capture</button><a class="btn secondary" href="{{ url_for('dash.datasets') }}">Cancel</a></div>
+<p class="small muted">Only traffic from your own isolated lab, captured with written permission, may be stored. Uploaded log files can also be saved as replay datasets from the upload page.</p>
+</form></div>
+
+<h2>Replay / simulation runs</h2>
+<div class="card"><table><caption class="sr-only">Replay runs</caption><thead><tr><th scope="col">#</th><th scope="col">Dataset</th><th scope="col">File</th><th scope="col">Speed</th><th scope="col">Filter</th><th scope="col">Status</th><th scope="col">Events</th><th scope="col">Alerts raised</th><th scope="col">Started</th><th scope="col">Ended</th></tr></thead><tbody>
+{% for r in runs %}<tr><td><a href="{{ url_for('sim.run_detail', run_id=r.id) }}" aria-label="Open run {{ r.id }}">{{ r.id }}</a></td><td>{{ r.dataset }}</td><td class="small">{{ (r.file or '')|replace('\x96', '-') }}</td><td>{{ (r.speed or 0)|int }}×</td><td>{{ (r.attack_filter or '-')|replace('\x96', '-') }}</td><td>{{ r.status }}</td><td>{{ '{:,}'.format(r.events_sent or 0) }}</td><td>{{ r.alerts_raised }}</td><td>{{ r.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ r.ended_at.strftime('%H:%M:%S') if r.ended_at else '-' }}</td></tr>
+{% else %}<tr><td colspan="10" class="muted">No runs yet. Start one from the Simulator.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

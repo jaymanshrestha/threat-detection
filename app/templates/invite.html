@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% block title %}Accept invitation{% endblock %}
+{% block content %}{% from "_icons.html" import icon %}
+<div class="auth"><div class="card">
+<div class="auth-brand"><span class="logo">{{ icon('shield') }}</span><b>SentinelSMB</b><span class="muted small">AI-driven network threat detection</span></div>
+{% if form %}
+<div class="steps"><span class="on">1 · Set password</span><span>2 · Enrol authenticator</span></div>
+<h1>Welcome - set up your account</h1>
+<p class="muted">You were invited as <b>{{ email }}</b>. Choose a password, then scan a QR code with your authenticator app.</p>
+<form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <label for="password">{{ form.password.label.text }}</label>{{ form.password(id="password", autocomplete="new-password") }}
+  <label for="confirm">{{ form.confirm.label.text }}</label>{{ form.confirm(id="confirm", autocomplete="new-password") }}
+  <button type="submit">{{ icon('key') }}<span>Continue to authenticator setup</span></button>
+  {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+</form>
+<p class="muted small">This link works once and expires 24 hours after it was sent.</p>
+{% else %}
+<h1>Invitation not valid</h1>
+<div class="err" role="alert">{{ error }}</div>
+<p><a class="btn secondary" href="{{ url_for('auth.login') }}">Go to sign in</a></p>
+{% endif %}
+</div></div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}{% from "_macros.html" import sev as badge %}{% from "_icons.html" import icon %}{% block title %}Simulator{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Simulator</h1>
+<p class="page-sub">UC-02 Replay a dataset simulation. Stored traffic is streamed through the same detection pipeline as live sources. Everything it creates is labelled <span class="sim">SIMULATED</span>.</p></div></div>
+
+{% if run %}
+<h2>Replay in progress</h2>
+<div class="card" id="sim-progress" data-status-url="{{ url_for('sim.status', run_id=run.id) }}" data-done-url="{{ url_for('sim.simulator') }}">
+<div class="facts-grid">
+<div><span class="k">Run</span>#{{ run.id }} · {{ run.dataset }}</div>
+<div><span class="k">File</span>{{ label(run.file or '') }}</div>
+<div><span class="k">Speed</span>{{ run.speed|int }}x{% if run.attack_filter %} · {{ label(run.attack_filter) }} only{% endif %}</div>
+<div><span class="k">Status</span><span class="pill {{ 'warn' if run.status == 'Paused' else 'ok' }}" id="sim-status">{{ run.status }}</span></div>
+<div><span class="k">Events sent</span><span id="sim-events">{{ '{:,}'.format(run.events_sent or 0) }}</span> / {{ '{:,}'.format(run.events_planned or 0) }}</div>
+<div><span class="k">New alerts</span><span id="sim-alerts">{{ run.alerts_raised or 0 }}</span></div>
+</div>
+{% set pct = (100 * (run.events_sent or 0) / run.events_planned) if run.events_planned else 0 %}
+<div class="progress" role="progressbar" aria-label="Replay progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ pct|round|int }}" id="sim-bar"><span style="width:{{ pct|round(1) }}%"></span></div>
+<div class="row" style="margin-top:12px">
+{% if run.status == 'Running' %}<form method="post" action="{{ url_for('sim.pause', run_id=run.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary">Pause</button></form>
+{% elif run.status == 'Paused' %}<form method="post" action="{{ url_for('sim.resume', run_id=run.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Resume</button></form>{% endif %}
+<form method="post" action="{{ url_for('sim.stop', run_id=run.id) }}" data-confirm="Stop replay #{{ run.id }} early? Results so far are kept."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="danger">Stop replay</button></form>
+<a class="btn secondary" href="{{ url_for('dash.overview') }}">Watch the dashboard</a>
+</div></div>
+{% endif %}
+
+{% if summary %}
+<h2>Last run summary</h2>
+<div class="card"><div class="facts-grid">
+<div><span class="k">Run</span><a href="{{ url_for('sim.run_detail', run_id=summary.id) }}">#{{ summary.id }}</a> · {{ summary.dataset }}</div>
+<div><span class="k">Status</span><span class="pill {{ 'ok' if summary.status == 'Completed' else ('bad' if summary.status == 'Failed' else 'warn') }}">{{ summary.status }}</span></div>
+<div><span class="k">Events replayed</span>{{ '{:,}'.format(summary.events_sent or 0) }}</div>
+<div><span class="k">New alerts</span>{{ summary.alerts_raised or 0 }}</div>
+<div><span class="k">Duration</span>{% if summary.ended_at %}{{ ((summary.ended_at - summary.started_at).total_seconds() // 60)|int }} min {{ ((summary.ended_at - summary.started_at).total_seconds() % 60)|int }} s{% else %}-{% endif %}</div>
+</div>
+{% if summary.error %}<p class="small muted">Reason: {{ summary.error }}</p>{% endif %}
+{% if summary_alerts %}<p class="small muted">Alerts this run added to or updated. Repeated traffic is counted on the existing alert instead of creating a duplicate (FR-08), so "New alerts" can be lower than this list.</p>{% endif %}
+{% if summary_alerts %}<table><caption class="sr-only">Alerts raised by run {{ summary.id }}</caption><thead><tr><th scope="col">#</th><th scope="col">Severity</th><th scope="col">Category</th><th scope="col">Occurrences</th></tr></thead><tbody>
+{% for a in summary_alerts %}<tr><td><a href="{{ url_for('dash.alert_detail', alert_id=a.id) }}" aria-label="Open alert {{ a.id }}">#{{ a.id }}</a></td><td>{{ badge(a.severity) }}</td><td>{{ a.category }} <span class="sim">SIMULATED</span></td><td>{{ '{:,}'.format(a.occurrence_count) }}</td></tr>{% endfor %}
+</tbody></table><p><a href="{{ url_for('sim.run_detail', run_id=summary.id) }}">All alerts from this run</a> · <a href="{{ url_for('inc.incidents') }}">Incidents</a></p>{% endif %}
+</div>
+{% endif %}
+
+<h2>Start a replay</h2>
+<div class="card">
+{% if sources %}
+<form method="post" action="{{ url_for('sim.start') }}" class="stack" data-confirm="Start this replay? Simulated events will appear on the dashboard labelled SIMULATED.">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="field"><label for="sim-src">Dataset</label><select id="sim-src" name="source" required>{% for s in sources %}<option value="{{ s.key }}">{{ label(s.label) }} · {{ fmt_size(s.size) }}</option>{% endfor %}</select></div>
+<div class="row">
+<fieldset class="field"><legend>Speed</legend><div class="row">{% for sp in speeds %}<label style="font-weight:500"><input type="radio" name="speed" value="{{ sp }}" {{ 'checked' if sp == 10 }}> {{ sp }}x</label>{% endfor %}</div></fieldset>
+<div class="field"><label for="sim-filter">Attack type (optional)</label><select id="sim-filter" name="attack_filter"><option value="">All traffic</option>{% for f in attack_filters %}<option value="{{ f }}">{{ label(f) }} + benign</option>{% endfor %}</select></div>
+<div class="field"><label for="sim-start">From (dataset time HH:MM)</label><input id="sim-start" name="start" placeholder="e.g. 14:49" pattern="[0-2][0-9]:[0-5][0-9]" inputmode="numeric"></div>
+<div class="field"><label for="sim-end">To (HH:MM)</label><input id="sim-end" name="end" placeholder="e.g. 15:05" pattern="[0-2][0-9]:[0-5][0-9]" inputmode="numeric"></div>
+</div>
+<div class="row"><button type="submit" {{ 'disabled' if run }}>{{ icon('play') }}<span>Start replay</span></button>
+{% if run %}<span class="small muted">A replay is already in progress.</span>{% else %}<span class="small muted">Tip: Friday-WorkingHours-Afternoon-PortScan from 14:49 to 15:05 at 100x takes about 10 seconds.</span>{% endif %}</div>
+</form>
+{% else %}<p class="muted">No replayable dataset is stored. Download the CIC-IDS2017 test-day files (see README) or register a lab capture on the Datasets page.</p>{% endif %}
+</div>
+
+<h2>Stored datasets</h2>
+<div class="card"><table><caption class="sr-only">Datasets available to the simulator</caption><thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Origin</th><th scope="col">Licence</th><th scope="col">Size</th></tr></thead><tbody>
+{% for d in datasets %}<tr><td><b>{{ d.name }}</b></td><td>{{ 'Public' if is_public(d) else (d.kind or 'lab')|capitalize }}</td><td class="small">{{ d.origin }}</td><td class="small">{{ d.licence }}</td><td class="small">{{ d.size_info }}</td></tr>{% endfor %}
+</tbody></table><p class="small"><a href="{{ url_for('dash.datasets') }}#lab">Register a lab capture or delete a lab dataset</a></p></div>
+
+<h2>Recent runs</h2>
+<div class="card"><table><caption class="sr-only">Recent replay runs</caption><thead><tr><th scope="col">#</th><th scope="col">Dataset / file</th><th scope="col">Speed</th><th scope="col">Status</th><th scope="col">Events</th><th scope="col">New alerts</th><th scope="col">Started</th></tr></thead><tbody>
+{% for r in runs %}<tr><td><a href="{{ url_for('sim.run_detail', run_id=r.id) }}" aria-label="Open run {{ r.id }}">#{{ r.id }}</a></td><td class="small">{{ r.dataset }} · {{ label(r.file or '') }}</td><td>{{ (r.speed or 0)|int }}x</td><td>{{ r.status }}</td><td>{{ '{:,}'.format(r.events_sent or 0) }}</td><td>{{ r.alerts_raised or 0 }}</td><td>{{ r.started_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No runs yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

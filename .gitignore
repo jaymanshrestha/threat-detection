@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+instance/
+data/raw/
+data/processed/
+.pytest_cache/
+
+.env.bak
+.env.*.bak
+*.db
+*.sqlite3
+*.log
+
+data/geo/*.mmdb

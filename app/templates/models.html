@@ -1,0 +1,76 @@
+{% extends "base.html" %}{% block title %}Models{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Model evaluation</h1><p class="page-sub">UC-06 Review model performance and tune sensitivity. Rule baseline and Isolation Forest results on held-out test days, with the Random Forest for comparison.</p></div></div>
+{% if not m %}<div class="card">No evaluation found. Run <code>python scripts/train_and_evaluate.py</code>.</div>{% else %}
+{% set R = m.results %}
+<p class="muted">Generated {{ m.generated_at }} · {{ m.dataset.name }} · Train: {{ m.split.train.days|join(', ') }} ({{ '{:,}'.format(m.split.train.benign) }} benign flows) · Validation: {{ m.split.validation.days|join(', ') }} · Test (held out): {{ m.split.test.days|join(', ') }} ({{ '{:,}'.format(m.split.test.flows) }} flows, {{ m.split.test.capture_hours }} capture hours). Whole capture days are kept in one split, so no attack session spans train and test.</p>
+<div class="card"><h2>Test-set results (held-out days)</h2>
+<table><thead><tr><th>Detector</th><th>Precision</th><th>Recall</th><th>F1</th><th>FPR</th><th>FP flows / hour</th><th>FP alerts / hour (after grouping)</th><th>ROC-AUC</th><th>PR-AUC</th><th>TP / FP / TN / FN</th></tr></thead><tbody>
+{% for name, r in R.items() %}{% set t = r.test %}<tr><td><b>{{ name }}</b></td><td>{{ t.precision }}</td><td>{{ t.recall }}</td><td>{{ t.f1 }}</td><td>{{ t.false_positive_rate }}</td><td>{{ t.fp_flows_per_hour }}</td><td>{{ t.fp_alerts_per_hour }}</td><td>{{ t.roc_auc or '-' }}</td><td>{{ t.pr_auc_average_precision or '-' }}</td><td class="small">{{ '{:,}'.format(t.tp) }} / {{ '{:,}'.format(t.fp) }} / {{ '{:,}'.format(t.tn) }} / {{ '{:,}'.format(t.fn) }}</td></tr>{% endfor %}
+</tbody></table>
+<p class="small muted">{{ m.notes.fp_per_hour }} {{ m.notes.risk_scale }}</p></div>
+
+{% set S = m.supervised_model %}
+<div class="grid charts" style="margin-top:12px">
+<div class="card"><h2>Active model</h2>
+<form method="post" action="{{ url_for('admin.active_model') }}" class="row" data-confirm="Activate this model version for new traffic? You can roll back afterwards."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="field"><label for="am">ML detector used for new traffic (the rule baseline always runs alongside)</label>
+<select id="am" name="active_model">{% for k, v in choices.items() %}<option value="{{ k }}" {{ 'selected' if k==active_model }} {{ '' if k in available else 'disabled' }}>{{ v }}{{ '' if k in available else ' - not trained' }}</option>{% endfor %}</select></div>
+<button type="submit">Activate model</button></form>
+{% if previous_model and previous_model != active_model %}<form method="post" action="{{ url_for('admin.active_model') }}" class="row" data-confirm="Roll back to {{ choices.get(previous_model, previous_model) }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="rollback" value="1"><button type="submit" class="secondary">Roll back to {{ choices.get(previous_model, previous_model) }}</button></form>{% endif %}
+<p class="small">Currently active: <b>{{ choices.get(active_model, active_model) }}</b>. Changes are audit-logged and apply to new traffic only.</p>
+{% if S %}<p class="small muted"><b>Honest caveat:</b> the supervised model was trained on {{ S.split.train_labels.keys()|reject('equalto','BENIGN')|join(', ') }} (Mon-Wed) and tuned on {{ S.split.tune_labels.keys()|reject('equalto','BENIGN')|join(', ') }}. The test days contain attack types it has never seen (e.g. PortScan, Bot, Infiltration), so its recall on those is low - see the per-category table. This is the classic weakness of supervised detection; the unsupervised model and rules cover it.</p>{% endif %}
+</div>
+<div class="card"><h2>Sensitivity control</h2>
+<form method="post" action="{{ url_for('admin.sensitivity') }}" class="stack" id="sens-form" data-confirm="Apply the new threshold to new traffic?">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="preset" id="preset" value="">
+<div class="preset-row" role="group" aria-label="Sensitivity presets"><span class="small muted">Presets:</span>
+<button type="button" class="secondary btn-sm" data-preset="0.85" data-name="Low">Low (fewer alerts)</button>
+<button type="button" class="secondary btn-sm" data-preset="0.70" data-name="Medium">Medium (default)</button>
+<button type="button" class="secondary btn-sm" data-preset="0.55" data-name="High">High (catch more)</button></div>
+<div class="field"><label for="threshold">Threshold (0-1, step 0.05) - current {{ '%.2f'|format(threshold) }}</label>
+<div class="range-row"><input type="range" id="threshold-slider" min="0" max="1" step="0.05" value="{{ '%.2f'|format(threshold) }}" aria-label="Threshold slider" aria-controls="threshold">
+<input type="number" id="threshold" name="threshold" min="0" max="1" step="0.05" value="{{ '%.2f'|format(threshold) }}" style="width:96px"></div></div>
+<div id="threshold-preview" class="small" role="status" aria-live="polite">Preview: choose a threshold to see its expected precision, recall and false positives per hour.</div>
+<div class="row"><button type="submit">Apply to new traffic</button><a class="btn secondary" href="{{ url_for('dash.models') }}">Cancel</a></div></form>
+<p class="small muted">The same 0-1 risk threshold applies to whichever model is active (both are calibrated so 0.70 = the operating point chosen on non-test data). Preview from held-out test days. Changes are recorded in the audit log.</p>
+{% for key, title, mk in [('test', 'Isolation Forest', 'isolation_forest'), ('random_forest_test', 'Random Forest', 'random_forest')] %}{% if m.sensitivity_sweep[key] %}
+<h3 class="small">{{ title }}{% if mk == active_model %} (active){% endif %}</h3>
+<table class="sweep" data-model="{{ title }}" {% if mk == active_model %}data-active="1"{% endif %}><thead><tr><th>Threshold</th><th>Precision</th><th>Recall</th><th>F1</th><th>FPR</th><th>FP flows/h</th><th>Flagged</th></tr></thead><tbody>
+{% for s in m.sensitivity_sweep[key] %}<tr data-t="{{ '%.2f'|format(s.threshold) }}" data-p="{{ s.precision }}" data-r="{{ s.recall }}" data-fph="{{ s.fp_flows_per_hour }}" {% if (s.threshold - threshold)|abs < 0.001 %}class="sel-row"{% endif %}><td>{{ '%.2f'|format(s.threshold) }}</td><td>{{ s.precision }}</td><td>{{ s.recall }}</td><td>{{ s.f1 }}</td><td>{{ s.false_positive_rate }}</td><td>{{ s.fp_flows_per_hour }}</td><td>{{ '{:,}'.format(s.flagged) }}</td></tr>{% endfor %}
+</tbody></table>{% endif %}{% endfor %}</div>
+<div class="card"><h2>Per-category detection rate (test)</h2>
+<table><thead><tr><th>Dataset label</th><th>Flows</th>{% for name in R %}<th>{{ name }}</th>{% endfor %}</tr></thead><tbody>
+{% for lab, v in R.isolation_forest.test.per_category_detection_rate.items() %}<tr><td>{{ lab }}</td><td>{{ '{:,}'.format(v.flows) }}</td>{% for name, r in R.items() %}<td>{{ '%.1f'|format(100*r.test.per_category_detection_rate[lab].rate) }}%</td>{% endfor %}</tr>{% endfor %}
+</tbody></table><p class="small muted">For BENIGN the rate shown is the false-positive rate.</p>
+<h2>Detection delay (test)</h2>
+<table><thead><tr><th>Attack session</th><th>First attack flow</th>{% for name in ['isolation_forest', 'random_forest', 'rule_baseline'] if R[name] and R[name].test.detection_delay %}<th>{{ name }} delay (min)</th>{% endfor %}</tr></thead><tbody>
+{% for k, d in R.isolation_forest.test.detection_delay.items() %}<tr><td>{{ k }}</td><td>{{ d.first_attack_flow }}</td>{% for name in ['isolation_forest', 'random_forest', 'rule_baseline'] if R[name] and R[name].test.detection_delay %}{% set x = R[name].test.detection_delay.get(k) %}<td>{{ (x.delay_minutes if x and x.delay_minutes is not none else 'not detected') }}</td>{% endfor %}</tr>{% endfor %}
+</tbody></table><p class="small muted">{{ m.notes.detection_delay }}</p></div>
+</div>
+<h2>Plots</h2>
+<div class="plots">
+{% set plot_alt = {"pr_curve_comparison.png": "Precision-recall curves comparing all detectors on the test days", "confusion_isolation_forest.png": "Confusion matrix for the Isolation Forest on the test days", "confusion_random_forest.png": "Confusion matrix for the Random Forest on the test days", "confusion_rule_baseline.png": "Confusion matrix for the rule baseline on the test days", "confusion_hybrid.png": "Confusion matrix for the combined Random Forest plus rules detector", "threshold_sweep.png": "Precision, recall and F1 against threshold for the Isolation Forest", "threshold_sweep_random_forest.png": "Precision, recall and F1 against threshold for the Random Forest", "global_importance_random_forest.png": "Global feature importance for the Random Forest", "roc_curve.png": "ROC curve for the Isolation Forest", "pr_curve.png": "Precision-recall curve for the Isolation Forest", "risk_histogram.png": "Histogram of risk scores for benign and attack flows"} %}
+{% for f in ['pr_curve_comparison.png','confusion_isolation_forest.png','confusion_random_forest.png','confusion_rule_baseline.png','confusion_hybrid.png','threshold_sweep.png','threshold_sweep_random_forest.png','global_importance_random_forest.png','roc_curve.png','pr_curve.png','risk_histogram.png'] if f in plots %}
+<div class="card"><img class="plot" src="{{ url_for('dash.report_file', name=f) }}" alt="{{ plot_alt.get(f, f) }}"></div>{% endfor %}
+</div>
+<h2>Model card</h2>
+<div class="card"><table class="kv">
+<tr><td>Model</td><td>{{ m.model.name }} ({{ m.model.type }}) - n_estimators={{ m.model.params.n_estimators }}, max_samples={{ m.model.params.max_samples }}, random_state={{ m.model.params.random_state }}</td></tr>
+<tr><td>Preprocessing</td><td>{{ m.model.preprocessing }}</td></tr>
+<tr><td>Features ({{ m.model.features|length }})</td><td class="small">{{ m.model.features|join(', ') }}</td></tr>
+<tr><td>Threshold selection</td><td>{{ m.model.threshold_selection }} (raw {{ '%.4f'|format(m.model.raw_threshold) }})</td></tr>
+{% if S %}<tr><td>Supervised model</td><td>{{ S.name }} ({{ S.type }}) - n_estimators={{ S.params.n_estimators }}, max_depth={{ S.params.max_depth }}, min_samples_leaf={{ S.params.min_samples_leaf }}, class_weight={{ S.params.class_weight }}, random_state={{ S.params.random_state }}</td></tr>
+<tr><td>Supervised split</td><td>train: {{ S.split.train }} ({{ '{:,}'.format(S.split.train_rows) }} flows, {{ '{:,}'.format(S.split.train_attacks) }} attacks) · tune: {{ S.split.tune }} · test: Thursday + Friday (untouched)</td></tr>
+<tr><td>Supervised threshold</td><td>{{ S.threshold_selection }} (probability {{ S.proba_threshold }})</td></tr>
+<tr><td>Explanations</td><td>{{ S.explanations.method }} - used now: <b>{{ explain_method }}</b>. Global importance = mean |contribution| over {{ S.explanations.sample }}:
+<table class="bars">{% set mx = S.explanations.features[0].mean_abs_contribution %}{% for f in S.explanations.features %}<tr><td>{{ f.feature }}</td><td style="width:45%"><div class="bar pos" style="width:{{ (100*f.mean_abs_contribution/mx)|round(1) }}%"></div></td><td class="small">{{ f.mean_abs_contribution }}</td><td class="small muted">impurity {{ f.impurity_importance }}</td></tr>{% endfor %}</table></td></tr>{% endif %}
+<tr><td>Rule baseline</td><td>R1 port scan: ≥ {{ m.rule_baseline.portscan_ports }} distinct destination ports from one source in 60 s; R2 DoS/flood: ≥ {{ m.rule_baseline.flood_flows }} flows source→destination in 60 s (1.1 × maximum seen on benign Monday)</td></tr>
+</table></div>
+<h2>Failure cases (test)</h2>
+<div class="card"><table><thead><tr><th>Type</th><th>Flow time</th><th>Source → destination:port</th><th>True label</th><th>Risk</th><th>Top deviating features</th></tr></thead><tbody>
+{% for c in m.failure_cases %}<tr><td>{{ c.kind }}</td><td>{{ c.observed_at }}</td><td>{{ c.src_ip|ip }} → {{ c.dst_ip|ip }}:{{ c.dst_port }}</td><td>{{ c.true_label }}</td><td>{{ c.risk }}</td><td class="small">{% for f in c.top_features %}{{ f.feature }} (z={{ f.z }}){% if not loop.last %}; {% endif %}{% endfor %}</td></tr>{% endfor %}
+{% for inc, a in analyst_fps %}<tr><td>False positive (marked by an administrator, <a href="{{ url_for('inc.incident_detail', iid=inc.id) }}">incident #{{ inc.id }}</a>)</td><td>{{ a.first_seen }}</td><td>{{ a.src_ip|ip }} → {{ a.dst_ip|ip }}</td><td>{{ a.category }}</td><td>{{ '%.2f'|format(a.max_risk or 0) }}</td><td class="small">{{ inc.resolution_note or '' }}</td></tr>{% endfor %}
+</tbody></table><p class="small muted">Alerts closed as False Positive on the Incidents page are added here so they can be reviewed when the model is retrained.</p></div>
+{% endif %}
+{% endblock %}

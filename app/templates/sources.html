@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% from "_icons.html" import icon %}{% block title %}Data sources{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Data sources</h1>
+<p class="page-sub">UC-08 Manage data sources. Each source shows whether it is Active, Paused or in Error, how many events it sent in the last hour and when it last sent one.</p></div></div>
+<div class="card"><table><caption class="sr-only">Data source status</caption><thead><tr><th scope="col">Source</th><th scope="col">Formats</th><th scope="col">Status</th><th scope="col">Events (last hour)</th><th scope="col">Last event</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td><b>{{ r.name }}</b></td><td class="small">{{ r.formats }}</td>
+<td><span class="pill {{ 'ok' if r.status == 'Active' else ('bad' if r.status == 'Error' else '') }}">{{ r.status }}</span>{% if r.error %}<div class="small muted">{{ r.error }}</div>{% endif %}</td>
+<td>{{ '{:,}'.format(r.last_hour) }}</td><td>{{ r.last.strftime('%Y-%m-%d %H:%M:%S') if r.last else 'No events yet' }}</td></tr>{% endfor %}</tbody></table>
+{% if not collectors %}<p class="small muted">Streaming collectors are not started in this process - run <code>python scripts/collector.py</code> or set <code>ENABLE_COLLECTORS=1</code>.</p>{% else %}<p class="small muted">Collectors: received {{ collectors.received }} · dropped {{ collectors.dropped }}</p>{% endif %}</div>
+
+<h2>Interval capture (.pcap)</h2>
+<div class="card"><div class="facts-grid">
+<div><span class="k">Capture folder</span><code class="small">{{ watch.dir }}</code></div>
+<div><span class="k">Interval</span>every {{ watch.interval // 60 }} min {{ '(automatic)' if watch.running else '(automatic checks off - set PCAP_WATCH_ENABLED=1)' }}</div>
+<div><span class="k">Files waiting</span>{{ watch.waiting }}</div>
+<div><span class="k">Last file</span>{{ watch.last_file or '-' }}{% if watch.last_status %} ({{ watch.last_status }}){% endif %}</div>
+</div>
+{% if watch.rejected %}<p class="small">Rejected captures: {{ watch.rejected|join(', ') }}</p>{% endif %}
+<form method="post" action="{{ url_for('dash.pcap_scan') }}" class="row" style="margin-top:10px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary">Check capture folder now</button>
+<span class="small muted">A capture tool such as <code>tcpdump -G 300 -w cap-%s.pcap</code> writes one file per interval. Flows are built from packet headers, payloads are never stored, and the raw capture is deleted after processing.</span></form></div>
+<h2>Upload a file</h2>
+<div class="card"><p>Choose the log format:</p>
+<nav class="tabs" aria-label="Upload formats">{% for name, a in adapters.items() %}<a href="{{ url_for('dash.upload', profile=name) }}">{{ name }}</a>{% endfor %}</nav>
+<ul class="small" style="margin-top:12px">{% for name, a in adapters.items() %}<li><b>{{ name }}</b> - {{ a.description }}</li>{% endfor %}</ul>
+<form method="post" enctype="multipart/form-data" class="row">{{ form.hidden_tag() }}<input type="hidden" name="profile" value="cicids2017"><div class="field"><label for="quick-file">CIC-IDS2017 CSV file</label>{{ form.file(accept=".csv", id="quick-file") }}</div><button type="submit">{{ icon('upload') }}<span>Quick upload (CIC-IDS2017 CSV)</span></button></form></div>
+<h2>Ingestion jobs</h2>
+<div class="card"><table><thead><tr><th>#</th><th>Time</th><th>Source</th><th>Profile</th><th>File</th><th>Status</th><th>Rows</th><th>Accepted</th><th>Rejected</th><th>Reasons</th></tr></thead><tbody>
+{% for j in jobs %}<tr><td>{{ j.id }}</td><td>{{ j.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ j.source }}</td><td>{{ j.profile }}</td><td class="small">{{ j.filename }}</td><td>{{ j.status }}</td><td>{{ j.total_rows }}</td><td>{{ j.accepted }}</td><td>{{ j.rejected }}</td><td class="small">{% if j.reasons %}{% for k, v in j.reasons.items() %}{{ k }}: {{ v }}{% if not loop.last %}; {% endif %}{% endfor %}{% endif %}</td></tr>
+{% else %}<tr><td colspan="10" class="muted">No jobs yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

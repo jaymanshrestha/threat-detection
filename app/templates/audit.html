@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% from "_macros.html" import pager %}{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Audit log</h1>
+<p class="page-sub">UC-11 View the audit log. Every sign-in, setting change and administrator action, append-only. Filter by date, user or action and export the result as CSV.</p></div></div>
+<form method="get" class="row card" style="margin-bottom:12px" role="search" aria-label="Filter audit log">
+<div class="field"><label for="f-action">Action contains</label><input id="f-action" name="action" value="{{ args.get('action','') }}"></div>
+<div class="field"><label for="f-actor">User contains</label><input id="f-actor" name="actor" value="{{ args.get('actor','') }}"></div>
+<div class="field"><label for="f-from">From</label><input id="f-from" type="date" name="from" value="{{ args.get('from','') }}"></div>
+<div class="field"><label for="f-to">To</label><input id="f-to" type="date" name="to" value="{{ args.get('to','') }}"></div>
+<button class="secondary" type="submit">Filter</button>{% if args.get('action') or args.get('actor') or args.get('from') or args.get('to') %}<a class="btn secondary" href="{{ url_for('admin.audit_log') }}">Clear filters</a>{% endif %}
+<a class="btn" href="{{ url_for('admin.audit_export', **args) }}">Export CSV</a></form>
+<div class="card"><table><thead><tr><th>#</th><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody>
+{% for e in page.items %}<tr><td>{{ e.id }}</td><td>{{ e.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ e.actor }}</td><td>{{ e.action }}</td><td class="small">{{ e.details|tojson if e.details else '' }}</td><td>{{ e.ip or '' }}</td></tr>{% else %}<tr><td colspan="6" class="muted" role="status">No audit entries match these filters.</td></tr>{% endfor %}
+</tbody></table>{{ pager(page, 'admin.audit_log', **args) }}<p class="small muted">Audit entries are append-only: the application has no edit or delete path, and the ORM rejects updates/deletes.</p></div>
+{% endblock %}

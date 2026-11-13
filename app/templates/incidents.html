@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% from "_macros.html" import sev as badge, pager %}{% from "_icons.html" import icon %}{% block title %}Incidents{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Incidents</h1>
+<p class="page-sub">UC-10 Review the incident timeline and reports. Newest first. High and Critical alerts open an incident automatically; open one for any other alert from its alert page.</p></div></div>
+<div class="grid tiles" style="margin-bottom:16px">{% for s, cls, ic in [('New','t-red','alert'),('Investigating','t-amber','radar'),('Resolved','t-green','shield'),('False Positive','t-cyan','flag')] %}
+<div class="card tile {{ cls }}"><div class="top"><div class="l">{{ s }}</div><span class="ic">{{ icon(ic) }}</span></div><div class="v">{{ '{:,}'.format(counts[s]) }}</div><div class="small muted">incidents</div></div>{% endfor %}</div>
+<div class="card"><form method="get" class="row" role="search" aria-label="Filter incidents">
+<div class="field"><label for="f-sev">Severity</label><select id="f-sev" name="severity"><option value="">All severities</option>{% for s in SEVERITIES|reverse %}<option {{ 'selected' if s==sev }}>{{ s }}</option>{% endfor %}</select></div>
+<div class="field"><label for="f-status">Status</label><select id="f-status" name="status"><option value="">All statuses</option>{% for s in statuses %}<option {{ 'selected' if s==status }}>{{ s }}</option>{% endfor %}</select></div>
+<div class="field"><label for="f-from">From date</label><input id="f-from" type="date" name="from" value="{{ d_from }}"></div>
+<div class="field"><label for="f-to">To date</label><input id="f-to" type="date" name="to" value="{{ d_to }}"></div>
+<button type="submit" class="secondary">Apply filters</button>{% if filtered %}<a class="btn secondary" href="{{ url_for('inc.incidents') }}">Clear filters</a>{% endif %}</form></div>
+<div class="card">
+{% if page.items %}
+<ol class="timeline" aria-label="Incident timeline, newest first">
+{% for inc in page.items %}{% set i = info[inc.id] %}{% set a = i.primary %}
+<li style="--sc:var(--{{ {'Critical':'crit','High':'high','Medium':'med','Low':'low'}.get(inc.severity, 'cyan') }})">
+<div class="row"><a href="{{ url_for('inc.incident_detail', iid=inc.id) }}"><b>Incident #{{ inc.id }} · {{ inc.title }}</b></a> {{ badge(inc.severity) }}
+<span class="pill {{ 'ok' if inc.status == 'Resolved' else ('info' if inc.status == 'False Positive' else ('warn' if inc.status == 'Investigating' else 'bad')) }}">{{ inc.status }}</span>
+{% if inc.is_simulated %}<span class="sim">SIMULATED</span>{% endif %}</div>
+<div class="when">{{ inc.created_at.strftime('%Y-%m-%d %H:%M') }} · {{ i.alerts|length }} alert{{ 's' if i.alerts|length != 1 }}{% if a %} · {{ a.src_ip|ip }} → {{ a.dst_ip|ip }} · {{ '{:,}'.format(a.occurrence_count) }} occurrences{% endif %}
+· {% if i.report %}<span class="tag {{ 'ai' if i.report.generator.startswith('LLM') else 'tpl' }}">{{ i.report|report_label }}</span>{% else %}no report yet{% endif %}</div>
+</li>{% endfor %}
+</ol>
+{{ pager(page, 'inc.incidents', severity=sev, status=status, **{'from': d_from, 'to': d_to}) }}
+{% else %}
+<p class="muted" role="status">{% if filtered %}No incidents match these filters. Try a wider date range or clear the filters.{% else %}No incidents yet. They appear here when a High or Critical alert is raised, or when you open one from an alert.{% endif %}</p>
+{% endif %}</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Users{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Administrators</h1>
+<p class="page-sub">UC-07 Manage administrator accounts. New people get a single-use invitation link (valid 24 hours) to set their password and enrol an authenticator app.</p></div></div>
+<div class="card"><table><caption class="sr-only">Administrator accounts</caption><thead><tr><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">MFA</th><th scope="col">Last login</th><th scope="col">Locked until</th><th scope="col">Actions</th></tr></thead><tbody>
+{% for u in users %}{% set st = invite_state(u) %}<tr><td>{{ u.email }}{% if u.id == current_user.id %} <span class="muted small">(you)</span>{% endif %}</td><td>{{ u.role }}</td>
+<td><span class="pill {{ 'ok' if st == 'Active' else ('warn' if st.startswith('Invit') else '') }}">{{ st }}</span></td><td>{{ 'Enrolled' if u.mfa_enabled else 'Not enrolled' }}</td>
+<td>{{ u.last_login_at.strftime('%Y-%m-%d %H:%M') if u.last_login_at else '-' }}</td><td>{{ u.locked_until.strftime('%H:%M') if u.locked_until else '-' }}</td>
+<td><div class="row">{% if u.id != current_user.id %}
+{% if u.invite_pending %}
+<form method="post" action="{{ url_for('admin.resend_invite', uid=u.id) }}" data-confirm="Send a new invitation to {{ u.email }}? The previous link will stop working."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary btn-sm" aria-label="Resend invitation to {{ u.email }}">Resend invitation</button></form>
+{% else %}
+<form method="post" action="{{ url_for('admin.toggle_user', uid=u.id) }}" data-confirm="{{ 'Disable' if u.active else 'Enable' }} {{ u.email }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn-sm {{ 'danger' if u.active else 'secondary' }}" aria-label="{{ 'Disable' if u.active else 'Enable' }} {{ u.email }}">{{ 'Disable' if u.active else 'Enable' }}</button></form>
+<form method="post" action="{{ url_for('admin.reset_mfa', uid=u.id) }}" data-confirm="Reset MFA for {{ u.email }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary btn-sm" aria-label="Reset MFA for {{ u.email }}">Reset MFA</button></form>
+{% endif %}{% endif %}
+<details class="inline-edit"><summary class="btn secondary btn-sm">Change email</summary>
+<form method="post" action="{{ url_for('admin.change_email', uid=u.id) }}" class="row" data-confirm="Change the email address for {{ u.email }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="sr-only" for="email-{{ u.id }}">New email for {{ u.email }}</label><input id="email-{{ u.id }}" name="email" type="email" value="{{ u.email }}" required maxlength="255"><button type="submit" class="btn-sm">Save email</button></form></details>
+</div></td></tr>{% endfor %}
+</tbody></table><p class="small muted">Accounts are disabled rather than deleted so their audit history is kept. You cannot disable your own account or the last active administrator.</p></div>
+<h2>Add administrator</h2>
+<div class="card"><form method="post" class="row" data-confirm="Create this account and send a 24-hour invitation link?">{{ form.hidden_tag() }}
+<div class="field"><label for="new-email">Email address</label>{{ form.email(id="new-email", type="email", autocomplete="off", placeholder="name@company.com") }}</div><button type="submit">Send invitation</button>
+<a class="btn secondary" href="{{ url_for('admin.users') }}">Cancel</a></form>
+<p class="small muted">Only the email address is needed. The person chooses their own password and sets up MFA from the invitation link.</p></div>
+{% endblock %}
