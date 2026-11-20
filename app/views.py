@@ -49,10 +49,10 @@ def inject_globals():
     return {"email_failures": failed, "sms_failures": sms_failed, "SEVERITIES": SEVERITIES}
 
 
-WIDGETS = {"tiles": "Summary tiles", "traffic": "Traffic over time", "anomalies": "Anomalies over time",
+WIDGETS = {"tiles": "Summary tiles", "map": "Threat map", "incidents": "Incident timeline",
+           "latest": "Latest alerts", "traffic": "Traffic over time", "anomalies": "Anomalies over time",
            "severity": "Flagged events by severity", "categories": "Alerts by category",
-           "ports": "Top destination ports", "sources": "Top source IPs", "model": "Detection model",
-           "incidents": "Incident timeline", "latest": "Latest alerts"}
+           "ports": "Top destination ports", "sources": "Top source IPs", "model": "Detection model"}
 MAX_RANGE_DAYS = 90
 
 
@@ -139,6 +139,17 @@ def _custom_range():
     return start, end, None
 
 
+def live_alert_ids(ids):
+    """Alerts raised from the live capture sensor (source kali-live) - tagged on the dashboard."""
+    from .sensor import SOURCE
+    if not ids:
+        return set()
+    rows = db.session.query(DetectionResult.alert_id).join(NetworkEvent, DetectionResult.event_id == NetworkEvent.id) \
+        .join(IngestionJob, NetworkEvent.job_id == IngestionJob.id) \
+        .filter(DetectionResult.alert_id.in_(ids), IngestionJob.source == SOURCE).distinct().all()
+    return {r[0] for r in rows}
+
+
 @bp.route("/api/summary")
 @login_required
 def summary():
@@ -187,6 +198,7 @@ def summary():
         age = (datetime.now() - last_recv).total_seconds()
         health = "Receiving" if age < 60 else "Idle"
     mode = settings.get("ip_display_mode")
+    live = live_alert_ids([a.id for a in recent])
     return jsonify({
         "range": rng, "latest_event": str(latest) if latest else None,
         "tiles": {"events": total, "flagged": flagged, "alerts": n_alerts, "grouped_detections": int(grouped or 0),
@@ -201,7 +213,7 @@ def summary():
         "top_ports": [[str(p), c] for p, c in ports], "top_sources": [[display(s, mode), c] for s, c in srcs],
         "recent_alerts": [{"id": a.id, "severity": a.severity, "category": a.category, "src": display(a.src_ip, mode),
                            "dst": display(a.dst_ip, mode), "count": a.occurrence_count, "last_seen": str(a.last_seen),
-                           "simulated": a.is_simulated} for a in recent],
+                           "simulated": a.is_simulated, "live": a.id in live} for a in recent],
         "replay": {"id": run.id, "status": run.status, "events": run.events_sent,
                    "alerts": run.alerts_raised} if run else None,
         "incidents": [{"id": i.id, "title": i.title, "severity": i.severity, "status": i.status,
@@ -500,6 +512,9 @@ def sources():
             _source_row("Replay simulator", "replay", "CIC-IDS2017 test days, lab captures"),
             _source_row("Streaming collectors", "stream:%", f"syslog UDP/TCP {current_app.config['SYSLOG_UDP_PORT']}, "
                         f"NetFlow v5 UDP {current_app.config['NETFLOW_UDP_PORT']}", running=bool(svc)),
+            _source_row("Live capture sensor (Kali)", "kali-live",
+                        "pcap chunks to /sensor/v1/pcap" + (f" on {current_app.config['SENSOR_BIND']}:{current_app.config['SENSOR_PORT']}"
+                                                              if current_app.extensions.get("sensor_server") else " (port 5000 only)")),
             _source_row("Interval capture (.pcap)", pcap_watch.SOURCE,
                         f"pcap every {watch['interval'] // 60} min from the capture folder", running=watch["running"])]
     return render_template("sources.html", form=form, jobs=jobs, rows=rows, adapters=ADAPTERS,

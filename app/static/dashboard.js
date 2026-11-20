@@ -1,18 +1,19 @@
 /* Overview dashboard: live updates pushed via Server-Sent Events (shared /api/stream connection opened
    by app.js); falls back to polling /api/summary every 5 s if SSE is unavailable or the connection drops.
    Styling only reads theme colours from CSS variables; every number shown comes from /api/summary. */
-const SEV_COLORS = {Low: "#3b82f6", Medium: "#f5b31c", High: "#fb6a1d", Critical: "#ff3355"};
-const CAT_COLORS = ["#8b5cf6", "#ff3355", "#22d3ee", "#22e39a", "#f5b31c", "#d946ef", "#3b82f6"];
+const SEV_COLORS = {Low: "#3b82f6", Medium: "#eab308", High: "#f97316", Critical: "#ef4444"};
+const CAT_COLORS = ["#6d8bff", "#ef4444", "#14b8a6", "#f97316", "#eab308", "#a78bfa", "#64748b"];
+const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 const charts = {};
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
 function applyTheme() {
   Chart.defaults.color = css("--chart-text");
   Chart.defaults.borderColor = css("--chart-grid");
-  Chart.defaults.font.family = '"Inter", system-ui, sans-serif';
+  Chart.defaults.font.family = FONT;
   const tt = Chart.defaults.plugins.tooltip;
   Object.assign(tt, {backgroundColor: css("--panel-solid"), titleColor: css("--text"), bodyColor: css("--text"),
-    borderColor: css("--border-strong"), borderWidth: 1, padding: 10, cornerRadius: 10, boxPadding: 4, usePointStyle: true});
+    borderColor: css("--border-strong"), borderWidth: 1, padding: 10, cornerRadius: 6, boxPadding: 4, usePointStyle: true});
   Object.values(charts).forEach(c => {
     Object.values(c.options.scales || {}).forEach(s => { if (s.grid) s.grid.color = css("--chart-grid"); if (s.ticks) s.ticks.color = css("--chart-text"); });
     c.options.plugins.tooltip = Object.assign(c.options.plugins.tooltip || {}, tt);
@@ -28,16 +29,7 @@ function areaGradient(rgb) {
     const {chart} = ctx, a = chart.chartArea;
     if (!a) return `rgba(${rgb},.2)`;
     const g = chart.ctx.createLinearGradient(0, a.top, 0, a.bottom);
-    g.addColorStop(0, `rgba(${rgb},.45)`); g.addColorStop(.6, `rgba(${rgb},.10)`); g.addColorStop(1, `rgba(${rgb},0)`);
-    return g;
-  };
-}
-function barGradient(c1, c2) {
-  return (ctx) => {
-    const {chart} = ctx, a = chart.chartArea;
-    if (!a) return c1;
-    const g = chart.ctx.createLinearGradient(a.left, 0, a.right, 0);
-    g.addColorStop(0, c1); g.addColorStop(1, c2);
+    g.addColorStop(0, `rgba(${rgb},.22)`); g.addColorStop(.6, `rgba(${rgb},.06)`); g.addColorStop(1, `rgba(${rgb},0)`);
     return g;
   };
 }
@@ -50,8 +42,8 @@ const centreText = {
     const m = chart.getDatasetMeta(0); if (!m.data.length) return;
     const {x, y} = m.data[0];
     const c = chart.ctx; c.save(); c.textAlign = "center"; c.textBaseline = "middle";
-    c.fillStyle = css("--text"); c.font = '800 24px "Inter", system-ui, sans-serif'; c.fillText(total.toLocaleString(), x, y - 8);
-    c.fillStyle = css("--muted"); c.font = '600 11px "Inter", system-ui, sans-serif'; c.fillText(opts.label, x, y + 14);
+    c.fillStyle = css("--text"); c.font = `700 22px ${FONT}`; c.fillText(total.toLocaleString(), x, y - 8);
+    c.fillStyle = css("--muted"); c.font = `600 11px ${FONT}`; c.fillText(opts.label, x, y + 14);
     c.restore();
   },
 };
@@ -76,23 +68,23 @@ const barScales = () => ({x: {beginAtZero: true, grid: {color: css("--chart-grid
 function init() {
   applyTheme();
   mk("c-events", "line", {labels: [], datasets: [
-    {label: "Events / min", data: [], borderColor: "#22d3ee", backgroundColor: areaGradient("34,211,238"), fill: true,
-     pointRadius: 0, pointHoverRadius: 5, borderWidth: 2.5, tension: .35},
+    {label: "Events / min", data: [], borderColor: "#6d8bff", backgroundColor: areaGradient("109,139,255"), fill: true,
+     pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, tension: .3},
   ]}, {scales: lineScales()});
   mk("c-flagged", "line", {labels: [], datasets: [
-    {label: "Flagged / min", data: [], borderColor: "#d946ef", backgroundColor: areaGradient("217,70,239"), fill: true,
-     pointRadius: 0, pointHoverRadius: 5, borderWidth: 2.5, tension: .35},
+    {label: "Flagged / min", data: [], borderColor: "#f97316", backgroundColor: areaGradient("249,115,22"), fill: true,
+     pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, tension: .3},
   ]}, {scales: lineScales()});
   mk("c-sev", "doughnut", {labels: Object.keys(SEV_COLORS), datasets: [{data: [], backgroundColor: Object.values(SEV_COLORS),
-    borderColor: css("--panel-solid"), borderWidth: 3, hoverOffset: 10, borderRadius: 6}]},
+    borderColor: css("--panel-solid"), borderWidth: 3, hoverOffset: 6, borderRadius: 2}]},
     {cutout: "70%", plugins: {centreText: {label: "flagged"}}});
   mk("c-cat", "doughnut", {labels: [], datasets: [{data: [], backgroundColor: CAT_COLORS,
-    borderColor: css("--panel-solid"), borderWidth: 3, hoverOffset: 10, borderRadius: 6}]},
+    borderColor: css("--panel-solid"), borderWidth: 3, hoverOffset: 6, borderRadius: 2}]},
     {cutout: "70%", plugins: {centreText: {label: "alerts"}}});
-  mk("c-ports", "bar", {labels: [], datasets: [{label: "Flagged flows", data: [], backgroundColor: barGradient("#06b6d4", "#8b5cf6"),
-    borderRadius: 8, borderSkipped: false, barPercentage: .72}]}, {indexAxis: "y", scales: barScales()});
-  mk("c-srcs", "bar", {labels: [], datasets: [{label: "Flagged flows", data: [], backgroundColor: barGradient("#fb6a1d", "#ff3355"),
-    borderRadius: 8, borderSkipped: false, barPercentage: .72}]}, {indexAxis: "y", scales: barScales()});
+  mk("c-ports", "bar", {labels: [], datasets: [{label: "Flagged flows", data: [], backgroundColor: "#6d8bff",
+    borderRadius: 4, borderSkipped: false, barPercentage: .72}]}, {indexAxis: "y", scales: barScales()});
+  mk("c-srcs", "bar", {labels: [], datasets: [{label: "Flagged flows", data: [], backgroundColor: "#f97316",
+    borderRadius: 4, borderSkipped: false, barPercentage: .72}]}, {indexAxis: "y", scales: barScales()});
 }
 
 function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
@@ -166,13 +158,13 @@ async function refresh() {
       `<li style="--sc:var(--${SC[i.severity] || "cyan"})"><a href="/incidents/${i.id}"><b>#${i.id} ${esc(i.title)}</b></a>
        <span class="badge sev-${esc(i.severity)}">${esc(i.severity)}</span> <span class="pill">${esc(i.status)}</span>
        ${i.simulated ? '<span class="sim">SIMULATED</span>' : ""}<div class="when">${esc(i.created)}</div></li>`).join("")
-      || '<li class="muted">No incidents yet.</li>';
+      || '<li class="empty-li muted">No incidents in this time range.</li>';
     const recent = document.getElementById("recent");
     if (recent) recent.innerHTML = d.recent_alerts.map(a =>
       `<tr><td><span class="badge sev-${esc(a.severity)}">${esc(a.severity)}</span></td>
-       <td><a href="/alerts/${a.id}">${esc(a.category)}</a> ${a.simulated ? '<span class="sim">SIMULATED</span>' : ""}</td>
+       <td><a href="/alerts/${a.id}">${esc(a.category)}</a> ${a.simulated ? '<span class="sim">SIMULATED</span>' : ""}${a.live ? ' <span class="sim live">KALI LIVE</span>' : ""}</td>
        <td>${esc(a.src)} → ${esc(a.dst)}</td><td>${a.count.toLocaleString()}</td><td>${esc(a.last_seen)}</td></tr>`).join("")
-      || '<tr><td colspan="5" class="muted">No alerts yet - start the replay simulator.</td></tr>';
+      || '<tr><td colspan="5" class="empty">No alerts in this time range. Start the replay simulator or the Kali live sensor to see detections.</td></tr>';
   } catch (e) {
     banner.textContent = "Live updates are paused - connection lost. Showing the last data received; retrying automatically.";
     banner.classList.remove("hidden");

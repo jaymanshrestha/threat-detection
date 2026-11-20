@@ -31,9 +31,14 @@ def test_tokens_match_stylesheet():
             assert m.group(1).lower() == tokens[name].lower(), f"{theme} {var}: css {m.group(1)} != tokens {tokens[name]}"
 
 
-def test_surface_is_composited_panel():
-    assert dt.blend("#111830", 0.62, dt.THEMES["dark"]["bg"]) == dt.THEMES["dark"]["surface"]
-    assert dt.blend("#ffffff", 0.78, dt.THEMES["light"]["bg"]) == dt.THEMES["light"]["surface"]
+def test_surface_is_opaque_panel():
+    """Cards are opaque in the v2 design, so the audited surface must be the literal --panel colour
+    (no translucent rgba panels or gradients that would change the colour text sits on)."""
+    assert dt.TOKEN_CSS["surface"] == "--panel"
+    for theme in dt.THEMES:
+        block = _theme_block(theme)
+        assert re.search(r"--panel:\s*#[0-9a-fA-F]{6}\s*;", block), f"{theme}: --panel must be an opaque hex colour"
+    assert "backdrop-filter" not in CSS
 
 
 def test_contrast_wcag_aa_both_themes():
@@ -100,5 +105,5 @@ def test_every_control_has_a_label(client):
 def test_style_guide_page(client):
     _login(client)
     html = client.get("/style-guide").get_data(as_text=True)
-    assert "Contrast audit" in html and "#0e7490" in html and "Typography" in html
+    assert "Contrast audit" in html and dt.THEMES["dark"]["accent"] in html and "Typography" in html
     assert 'href="/style-guide"' in client.get("/").get_data(as_text=True)

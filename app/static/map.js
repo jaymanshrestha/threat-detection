@@ -3,16 +3,17 @@
 (() => {
   const el = document.getElementById("map");
   if (!el) return;
-  const SEV = {Low: "#3b82f6", Medium: "#f5b31c", High: "#fb6a1d", Critical: "#ff3355"};
-  const map = L.map(el, {worldCopyJump: true, zoomControl: true}).setView([20, 10], 2);
+  const SEV = {Low: "#3b82f6", Medium: "#eab308", High: "#f97316", Critical: "#ef4444"};
+  const compact = el.dataset.compact === "1";  // small preview on the overview dashboard
+  const map = L.map(el, {worldCopyJump: true, zoomControl: !compact, scrollWheelZoom: !compact}).setView([20, 10], 2);
   // Offline basemap: Natural Earth country outlines (public domain) shipped with the app,
   // so the map needs no API key, no external tile server and works without internet.
   map.attributionControl.addAttribution('Basemap: <a href="https://www.naturalearthdata.com">Natural Earth</a> &middot; IP Geolocation by <a href="https://db-ip.com">DB-IP</a>');
   const isDark = () => document.documentElement.getAttribute("data-theme") !== "light";
   const landStyle = () => isDark()
-    ? {color: "#3b4a6b", weight: 0.8, fillColor: "#1a2340", fillOpacity: 1}
-    : {color: "#94a3b8", weight: 0.8, fillColor: "#e2e8f0", fillOpacity: 1};
-  const paintSea = () => { el.style.background = isDark() ? "#0b1020" : "#f8fafc"; };
+    ? {color: "#3a4456", weight: 0.7, fillColor: "#1f2733", fillOpacity: 1}
+    : {color: "#b8c0cc", weight: 0.7, fillColor: "#e5e9ef", fillOpacity: 1};
+  const paintSea = () => { el.style.background = isDark() ? "#11161e" : "#f8fafc"; };
   paintSea();
   let land = null;
   fetch(el.dataset.world || "/static/world.geojson").then(r => r.json()).then(g => {
@@ -26,7 +27,8 @@
   let fitted = false;
 
   async function load() {
-    const sev = document.getElementById("sev").value;
+    const sevEl = document.getElementById("sev");
+    const sev = sevEl ? sevEl.value : "";
     const r = await fetch("/api/geo" + (sev ? "?severity=" + encodeURIComponent(sev) : ""), {credentials: "same-origin"});
     if (!r.ok) return;
     const d = await r.json();
@@ -39,17 +41,19 @@
         .addTo(layer);
     });
     d.points.forEach(p => {
-      const m = L.circleMarker([p.lat, p.lon], {radius: 5 + Math.min(10, Math.sqrt(p.alerts)), color: p.internal ? "#e6ecff" : SEV[p.severity],
+      const m = L.circleMarker([p.lat, p.lon], {radius: 5 + Math.min(10, Math.sqrt(p.alerts)), color: p.internal ? (isDark() ? "#e6e9ef" : "#111827") : SEV[p.severity],
         weight: p.internal ? 3 : 1.5, fillColor: SEV[p.severity] || "#94a3b8", fillOpacity: .8, className: `glow-${p.severity}`});
       m.bindPopup(`<b>${esc(p.ip)}</b>${p.internal ? " (internal)" : ""}<br>${esc(p.place || "unknown place")}<br>role: ${esc(p.roles.join(", "))}<br>${p.alerts} alert(s), highest ${esc(p.severity)}`);
       m.addTo(layer);
       bounds.push([p.lat, p.lon]);
     });
-    document.getElementById("map-stats").textContent =
+    const stats = document.getElementById("map-stats");
+    if (stats) stats.textContent =
       `${d.points.length} locations, ${d.lines.length} alert lines, ${d.unknown_locations} address(es) without a known location`;
     if (!fitted && bounds.length) { map.fitBounds(bounds, {padding: [30, 30], maxZoom: 5}); fitted = true; }
   }
-  document.getElementById("sev").addEventListener("change", load);
+  const sevSel = document.getElementById("sev");
+  if (sevSel) sevSel.addEventListener("change", load);
   load();
   let t = 0;
   window.addEventListener("td:tick", () => { if (Date.now() - t > 5000) { t = Date.now(); load(); } });

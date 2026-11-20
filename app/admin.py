@@ -408,5 +408,5 @@ def style_guide():
              "activity", "alert", "zap", "radar", "layers", "play", "flame", "sun", "moon", "logout", "menu", "lock",
              "key", "file", "clock", "sparkles", "palette"]
     themes = {t: {"palette": dt.palette(t), "audit": dt.audit_before_after(t)} for t in dt.THEMES}
-    return render_template("style_guide.html", themes=themes, type_scale=dt.TYPE_SCALE, icons=icons,
+    return render_template("style_guide.html", themes=themes, type_scale=dt.TYPE_SCALE, spacing=dt.SPACING, icons=icons,
                            severities=SEVERITIES)

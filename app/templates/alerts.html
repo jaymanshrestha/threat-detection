@@ -4,13 +4,13 @@
 <div class="page-head"><div><h1>Alerts (de-duplicated)</h1><p class="page-sub">Select an alert number to see why it was flagged and generate an incident report.</p></div>
 <form method="get" class="row" role="search" aria-label="Filter by severity"><div class="field"><label for="f-sev">Severity</label><select id="f-sev" name="severity"><option value="">All severities</option>{% for s in SEVERITIES|reverse %}<option {{ 'selected' if s==sev }}>{{ s }}</option>{% endfor %}</select></div><button class="secondary" type="submit">Filter</button></form></div>
 <p class="muted small">Repeated detections with the same source, destination and category inside the grouping window are merged into one alert with a counter. No detection is discarded.</p>
-<div class="card"><table>
-<thead><tr><th>#</th><th>Severity</th><th>Category</th><th>Source → destination</th><th>Occurrences</th><th>First seen</th><th>Last seen</th><th>Max risk</th><th>Top features</th><th>Last email</th></tr></thead><tbody>
+<div class="card"><div class="table-wrap"><table>
+<thead><tr><th scope="col">#</th><th scope="col">Severity</th><th scope="col">Category</th><th scope="col">Source → destination</th><th scope="col">Occurrences</th><th scope="col">First seen</th><th scope="col">Last seen</th><th scope="col">Max risk</th><th scope="col">Top features</th><th scope="col">Last email</th></tr></thead><tbody>
 {% for a in page.items %}<tr>
 <td><a href="{{ url_for('dash.alert_detail', alert_id=a.id) }}" aria-label="Open alert {{ a.id }}">#{{ a.id }}</a></td><td>{{ badge(a.severity) }}</td>
 <td>{{ a.category }} {% if a.is_simulated %}<span class="sim">SIMULATED</span>{% endif %}</td>
-<td>{{ a.src_ip|ip }} → {{ a.dst_ip|ip }}</td><td>{{ '{:,}'.format(a.occurrence_count) }}</td><td>{{ a.first_seen }}</td><td>{{ a.last_seen }}</td>
+<td class="mono">{{ a.src_ip|ip }} → {{ a.dst_ip|ip }}</td><td>{{ '{:,}'.format(a.occurrence_count) }}</td><td class="ts">{{ a.first_seen }}</td><td class="ts">{{ a.last_seen }}</td>
 <td>{{ '%.2f'|format(a.max_risk or 0) }}</td><td>{{ feats(a.top_features) }}</td><td class="small">{{ a.last_emailed_at.strftime('%H:%M:%S') if a.last_emailed_at else ('in next summary' if a.pending_digest else '-') }}</td>
-</tr>{% else %}<tr><td colspan="10" class="muted">No alerts.</td></tr>{% endfor %}
-</tbody></table>{{ pager(page, 'dash.alerts', severity=sev or '') }}</div>
+</tr>{% else %}<tr><td colspan="10" class="empty">No alerts{{ " with severity " ~ sev if sev }}. New detections appear here automatically.</td></tr>{% endfor %}
+</tbody></table></div>{{ pager(page, 'dash.alerts', severity=sev or '') }}</div>
 {% endblock %}

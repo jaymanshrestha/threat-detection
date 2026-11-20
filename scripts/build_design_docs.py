@@ -44,7 +44,7 @@ MOCKUPS = [
     ("02_mfa_verify", "UC-01 MFA verification", "Large numeric code field with one-time-code autofill and a helper line; same card layout as login for continuity."),
     ("24_invite_accept", "UC-01 A3 Accept invitation", "First sign-in from a single-use 24-hour link: set a password, then enrol the authenticator (step 2)."),
     ("24b_invite_expired", "UC-01 E6 Invitation expired or used", "One clear message telling the person to ask for a new invitation."),
-    ("03_dashboard", "UC-03 Dashboard (overview)", "KPI tiles, live status and gradient charts updated through server push; time-range selector."),
+    ("03_dashboard", "UC-03 Dashboard (overview)", "KPI row, threat-map preview, incident timeline and latest alerts, then trend charts; live status through server push; time-range selector."),
     ("27_dashboard_full", "UC-03 Dashboard with model panel and incident timeline", "Full page: charts, Detection model panel, Incident timeline (UC-10 A1) and latest alerts."),
     ("26_dashboard_layout", "UC-03 A2/A3 Customise layout", "Show, hide and reorder widgets; saved per administrator; Reset to default; invalid layouts rejected (E3)."),
     ("18_simulator_running", "UC-02 Simulator - replay in progress", "Run facts, events sent / alerts raised with a progress bar, Pause / Stop replay; Start is disabled while a replay runs (E1)."),
@@ -164,13 +164,13 @@ OTHER_FIXES = [
     "Buttons that only show an icon have an aria-label; per-row buttons on Users name the user (\"Disable ops@example.com\"). On phones the Sign out text is hidden visually but kept for screen readers (it used to be display:none, leaving the button without a name).",
     "Visible 2px focus ring on buttons, links, tabs and fields when using the keyboard (inputs previously had a faint 20% glow only).",
     "Form field borders raised from about 1.2:1 to at least 3.4:1 so the field outline is visible (WCAG 1.4.11 non-text contrast).",
-    "Primary buttons and active tabs use a deeper cyan → violet → magenta gradient so white text is 5.3:1 or more everywhere; the brighter gradient is still used for logos, headings and charts.",
+    "v2 redesign: gradients, glow and glass panels removed. Primary buttons are one flat indigo accent (#3b5bdb, white text 5.67:1); cards are opaque, so contrast is measured on the exact colour text sits on.",
     "Severity badges use dedicated text shades (--low-fg, --med-fg, --high-fg, --crit-fg); the vibrant colours are kept for dots, charts and the map. Severity is always written as a word, never colour alone.",
     "Charts are announced as images with a description (role=\"img\", aria-label \"Chart: ...\"); the same numbers are in the tables. Model plots have descriptive alt text instead of file names.",
     "Breadcrumbs on the alert page, aria-current on the active nav item and tab, role=\"search\" on filter forms, and a label for the threat-map region.",
     "Consistent page structure: one H1 plus a one-line subtitle on every page; labels in a shared .field style; buttons always declare type=\"submit\" or type=\"button\".",
     "The threshold control on Models is now a slider kept in sync with the number field.",
-    "Existing: skip-to-content link, reduced-motion support, Inter font at 14px body, 12px minimum for small text.",
+    "Existing: skip-to-content link, reduced-motion support, one system font stack (Segoe UI on Windows) at 14px body, 12px minimum for small text.",
     "New v5 screens (Simulator, Incidents, Incident detail, Accept invitation, layout editor, SMS card) use the same tokens and pass the same label and contrast checks; status pills always contain the status word; the replay progress bar is a labelled role=\"progressbar\" and the sensitivity preview is announced with aria-live.",
 ]
 
@@ -389,7 +389,7 @@ ul{{margin:4px 0 8px 18px;padding:0}} li{{margin:2px 0}}
 
 <section><h2>1. Purpose of the UI/UX design</h2>
 <p><b>Users.</b> The application is used by the IT administrator of a small or medium business (SMB) - usually one person who looks after the network part-time, not a full security operations team. They need to see quickly whether anything is wrong, understand why something was flagged, and know what to do next, without reading raw logs.</p>
-<p><b>UI goal (the look).</b> A dark "security operations centre" theme that is calm by default and makes risk stand out: deep navy surfaces, one cyan → violet → magenta accent gradient, and four severity colours (blue Low, amber Medium, orange High, red Critical) used the same way on every screen, chart and map. A light theme is provided for bright offices and printing.</p>
+<p><b>UI goal (the look).</b> A calm, professional "security operations centre" theme that makes risk stand out: neutral slate surfaces, opaque cards, a single indigo accent for actions and links, and four severity colours (blue Low, amber Medium, orange High, red Critical) used the same way on every screen, chart and map. A light theme is provided for bright offices and printing.</p>
 <p><b>UX goal (the feel).</b> Every task starts at the dashboard and is at most three clicks deep. The sidebar groups pages by task - <i>Monitor</i> (Overview, Flagged events, Alerts, Incidents, Threat map), <i>Intelligence</i> (Models, Simulator, Data sources, Datasets) and <i>Administration</i> (Notifications, Users, Audit log, Style guide). Security steps (MFA, confirmations for destructive actions, an audit trail) are built into the flow instead of being extra screens.</p>
 <h3>Design process followed</h3>
 <ol><li><b>Wireframes</b> (section 3) - greyscale layouts that fix structure, content hierarchy and navigation.</li>
@@ -429,21 +429,21 @@ ul{{margin:4px 0 8px 18px;padding:0}} li{{margin:2px 0}}
 <section class="wide"><h2>4. User flow - high-fidelity version</h2><figure class="flow"><img src="{uri(D / 'user_flow_hifi.png')}"></figure></section>
 
 <section><h2>5. High-fidelity mockups</h2>
-<p class="muted">Captured from the working prototype at 1440 × 900 with the final palette, the Inter typeface and the project's own icon set. Data shown is from the public CIC-IDS2017 dataset replayed through the system.</p>{mk}</section>
+<p class="muted">Captured from the working prototype at 1440 × 900 with the final v2 palette, the system font stack and the project's own inline-SVG icon set. Data shown is from the public CIC-IDS2017 dataset replayed through the system.</p>{mk}</section>
 
 <section><h2>6. Style guide</h2>
 <p>The style guide is a page inside the application (<span class="pill">Administration → Style guide</span>), generated from the same design tokens the stylesheet uses, so it cannot drift from the real UI.</p>
 <h3>6.1 Colour palette</h3>{pal}
-<h3>6.2 Typography</h3><p>Typeface <b>Inter</b> (variable font, SIL Open Font License, bundled offline) - designed for screens, with tall x-height and clear 1/l/I and 0/O shapes that suit IP addresses and numbers. Tabular figures are switched on so live counters do not jump. Monospace (Cascadia Code / Consolas) for code and raw values.</p>
+<h3>6.2 Typography</h3><p>One <b>system font stack</b> - system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif - so the app uses the operating system's own UI font (Segoe UI on Windows), loads nothing and stays fully offline. Tabular figures are switched on so live counters do not jump. Monospace (Cascadia Mono / Consolas) for IP addresses, code and raw values. Spacing follows a 4px scale (4, 8, 12, 16, 24, 32px).</p>
 <table><thead><tr><th>Style</th><th>Size</th><th>Weight</th><th>Sample</th></tr></thead><tbody>{types}</tbody></table>
 <h3>6.3 Components</h3>
-<ul><li><b>Primary button</b> - gradient #0e7490 → #7c3aed → #a21caf, white bold text, 10px radius, 38px tall; one per form.</li>
-<li><b>Secondary button</b> - transparent with a 3:1 outline; filters and reversible actions. <b>Destructive</b> - orange → red, always behind a confirm dialog.</li>
-<li><b>Severity badge</b> - pill with a coloured dot and the severity word. <b>Cards</b> - 16px radius glass panels. <b>Fields</b> - label above, 38px tall, visible border, cyan focus ring.</li></ul>
+<ul><li><b>Primary button</b> - flat indigo #3b5bdb, white semibold text, 6px radius, 36px tall; one per form.</li>
+<li><b>Secondary button</b> - neutral with a 3:1 outline; filters and reversible actions. <b>Destructive</b> - solid red, always behind a confirm dialog.</li>
+<li><b>Severity badge</b> - pill with a coloured dot and the severity word. <b>Cards</b> - opaque, 10px radius, 1px border. <b>Fields</b> - label above, 36px tall, visible border, 2px focus ring. <b>Tables</b> - shaded header row, 10-12px cell padding, row hover, empty and loading rows.</li></ul>
 {sgimgs}</section>
 
 <section><h2>7. Accessibility (WCAG 2.1 AA)</h2>
-<p>Contrast was measured with the WCAG 2.1 relative-luminance formula for every text/background pair in both themes (translucent cards measured as their blended colour). Text needs 4.5:1; large text and UI parts need 3:1. <b>{fails} pairs failed before this review; all pass now.</b></p>
+<p>Contrast was measured with the WCAG 2.1 relative-luminance formula for every text/background pair in both themes (cards are opaque, so each pair is measured on the exact surface colour). Text needs 4.5:1; large text and UI parts need 3:1. <b>{fails} pairs failed before this review; all pass now.</b></p>
 <table><thead><tr><th>Colour pair</th><th>Needs</th><th>Dark before</th><th>Dark now</th><th>Light before</th><th>Light now</th></tr></thead><tbody>{rows}</tbody></table>
 <h3>Labels, keyboard and other checks</h3><ul>{''.join(f'<li>{esc(x)}</li>' for x in OTHER_FIXES)}</ul>
 <p class="muted">Automated tests (<code>tests/test_accessibility.py</code>) re-check contrast in both themes and fail the build if any page has a form field without a label or a button without a name.</p></section>

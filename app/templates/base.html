@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
-<title>{% block title %}Threat Dashboard{% endblock %} · SMB Threat Detection</title>
+<title>{% block title %}Threat Dashboard{% endblock %} · SentinelSMB</title>
 <script src="{{ url_for('static', filename='theme-init.js') }}"></script>
-<link rel="preload" href="{{ url_for('static', filename='vendor/inter/InterVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">{% block head %}{% endblock %}
 </head>
 {% from "_icons.html" import icon %}
@@ -16,7 +15,7 @@
 <aside class="sidebar" id="sidebar" aria-label="Main navigation"><div class="side-inner">
   <a class="brand" href="{{ url_for('dash.overview') }}">
     <span class="logo">{{ icon('shield') }}</span>
-    <span><b>SentinelSMB</b><small>Threat Detection SOC</small></span>
+    <span><b>SentinelSMB</b><small>Security operations</small></span>
   </a>
   <nav>
     {% macro nav(endpoint, label, ico, active) %}<a href="{{ url_for(endpoint) }}" class="{{ 'active' if active }}" {% if active %}aria-current="page"{% endif %}>{{ icon(ico) }}<span>{{ label }}</span></a>{% endmacro %}
@@ -37,7 +36,7 @@
     {{ nav('admin.audit_log', 'Audit log', 'list', ep=='admin.audit_log') }}
     {{ nav('admin.style_guide', 'Style guide', 'palette', ep=='admin.style_guide') }}
   </nav>
-  <div class="side-foot small">Isolation Forest · Random Forest · Rules<br><span class="muted">CIC-IDS2017 evaluation · <a href="{{ url_for('admin.style_guide') }}">UI style guide</a></span></div>
+  <div class="side-foot small muted">Detection: Isolation Forest · Random Forest · Rules</div>
 </div></aside>
 <header class="topbar">
   <button class="icon-btn menu-btn" id="menu-btn" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">{{ icon('menu') }}</button>
@@ -48,7 +47,6 @@
   <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary btn-sm" type="submit">{{ icon('logout') }}<span>Log out</span></button></form>
 </header>
 {% else %}
-<div class="auth-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grid-lines"></span></div>
 {% endif %}
 <main id="main" tabindex="-1">
 {% if email_failures %}<div class="banner">{{ icon('alert') }} {{ email_failures }} alert email(s) failed in the last 24 h. <a href="{{ url_for('admin.notifications') }}">View notification log</a></div>{% endif %}

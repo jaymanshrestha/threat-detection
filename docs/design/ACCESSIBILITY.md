@@ -6,34 +6,32 @@ Text needs 4.5:1; large text and UI parts (field borders, focus rings, severity 
 
 | Colour pair | Needs | Dark before | Dark now | Light before | Light now |
 |---|---|---|---|---|---|
-| Body text on page | 4.5:1 | 16.85 | 16.85 | 16.15 | 16.15 |
-| Body text on card | 4.5:1 | 15.75 | 15.75 | 17.64 | 17.64 |
-| Secondary text on card | 4.5:1 | 7.20 | 7.20 | 6.90 | 6.90 |
-| Secondary text on page | 4.5:1 | 7.70 | 7.70 | 6.31 | 6.31 |
-| Tertiary text (nav headings) | 4.5:1 | 3.46 FAIL | 6.02 | 3.44 FAIL | 5.17 |
-| Table header text | 4.5:1 | 9.21 | 9.21 | 8.98 | 8.98 |
-| Link text on card | 4.5:1 | 10.28 | 10.28 | 3.59 FAIL | 5.22 |
-| Link text on page | 4.5:1 | 10.99 | 10.99 | 3.28 FAIL | 4.78 |
-| Hover link (accent) | 4.5:1 | 5.37 | 5.37 | 4.59 | 6.16 |
-| Success text | 4.5:1 | 11.08 | 11.08 | 3.67 FAIL | 5.34 |
-| Input text | 4.5:1 | 15.83 | 15.83 | 18.11 | 18.11 |
-| Input border vs card | 3.0:1 | 1.25 FAIL | 3.76 | 1.22 FAIL | 3.44 |
-| Focus ring vs page | 3.0:1 | 10.99 | 10.99 | 3.28 | 4.78 |
-| Focus ring vs card | 3.0:1 | 10.28 | 10.28 | 3.59 | 5.22 |
-| Button text on gradient start | 4.5:1 | 1.81 FAIL | 5.36 | 3.68 FAIL | 5.36 |
-| Button text on gradient middle | 4.5:1 | 4.23 FAIL | 5.70 | 5.70 | 5.70 |
-| Button text on gradient end | 4.5:1 | 3.46 FAIL | 6.32 | 4.71 | 6.32 |
-| Low badge text | 4.5:1 | 4.28 FAIL | 6.76 | 4.16 FAIL | 5.39 |
-| Medium badge text | 4.5:1 | 7.80 | 7.80 | 3.05 FAIL | 5.94 |
-| High badge text | 4.5:1 | 5.41 | 5.98 | 3.47 FAIL | 6.01 |
-| Critical badge text | 4.5:1 | 4.58 | 6.00 | 3.67 FAIL | 6.27 |
-| Critical KPI number | 3.0:1 | 5.18 | 5.18 | 4.58 | 4.58 |
-| Severity dot / chart colour Low | 3.0:1 | 5.05 | 5.05 | 5.03 | 5.03 |
-| Severity dot / chart colour Medium | 3.0:1 | 10.04 | 10.04 | 3.55 | 3.10 |
-| Severity dot / chart colour High | 3.0:1 | 6.35 | 6.35 | 4.19 | 3.47 |
-| Severity dot / chart colour Critical | 3.0:1 | 5.18 | 5.18 | 4.58 | 4.58 |
+| Body text on page | 4.5:1 | 16.85 | 15.56 | 16.15 | 16.39 |
+| Body text on card | 4.5:1 | 15.75 | 14.22 | 17.64 | 17.74 |
+| Secondary text on card | 4.5:1 | 7.20 | 7.45 | 6.90 | 7.56 |
+| Secondary text on page | 4.5:1 | 7.70 | 8.15 | 6.31 | 6.98 |
+| Tertiary text (nav headings) | 4.5:1 | 3.46 FAIL | 6.00 | 3.44 FAIL | 5.98 |
+| Table header text | 4.5:1 | 8.78 | 8.14 | 9.21 | 9.85 |
+| Link text on card | 4.5:1 | 10.28 | 8.57 | 3.59 FAIL | 5.67 |
+| Link text on page | 4.5:1 | 10.99 | 9.38 | 3.28 FAIL | 5.23 |
+| Success text | 4.5:1 | 11.08 | 9.25 | 3.67 FAIL | 5.48 |
+| Input text | 4.5:1 | 15.83 | 15.20 | 18.11 | 17.74 |
+| Input border vs card | 3.0:1 | 1.25 FAIL | 3.73 | 1.22 FAIL | 3.77 |
+| Focus ring vs page | 3.0:1 | 10.99 | 7.26 | 3.28 | 5.23 |
+| Focus ring vs card | 3.0:1 | 10.28 | 6.64 | 3.59 | 5.67 |
+| Button text on accent | 4.5:1 | 1.81 FAIL | 5.67 | 3.68 FAIL | 5.67 |
+| Button text on accent (hover) | 4.5:1 | 4.23 FAIL | 6.77 | 4.71 | 6.77 |
+| Low badge text | 4.5:1 | 4.28 FAIL | 6.99 | 4.16 FAIL | 5.50 |
+| Medium badge text | 4.5:1 | 7.80 | 8.65 | 3.05 FAIL | 5.70 |
+| High badge text | 4.5:1 | 5.41 | 6.33 | 3.47 FAIL | 5.94 |
+| Critical badge text | 4.5:1 | 4.58 | 6.17 | 3.67 FAIL | 6.70 |
+| Critical KPI number | 3.0:1 | 5.18 | 7.08 | 4.58 | 8.31 |
+| Severity dot / chart colour Low | 3.0:1 | 5.05 | 4.70 | 5.03 | 5.17 |
+| Severity dot / chart colour Medium | 3.0:1 | 10.04 | 9.02 | 3.55 | 4.92 |
+| Severity dot / chart colour High | 3.0:1 | 6.35 | 6.17 | 4.19 | 5.18 |
+| Severity dot / chart colour Critical | 3.0:1 | 5.18 | 4.60 | 4.58 | 4.83 |
 
-**16 pairs failed before the pass; 0 fail now.**
+**15 pairs failed before the pass; 0 fail now.**
 
 ## Other accessibility work
 
@@ -41,13 +39,13 @@ Text needs 4.5:1; large text and UI parts (field borders, focus rings, severity 
 - Buttons that only show an icon have an aria-label; per-row buttons on Users name the user ("Disable ops@example.com"). On phones the Sign out text is hidden visually but kept for screen readers (it used to be display:none, leaving the button without a name).
 - Visible 2px focus ring on buttons, links, tabs and fields when using the keyboard (inputs previously had a faint 20% glow only).
 - Form field borders raised from about 1.2:1 to at least 3.4:1 so the field outline is visible (WCAG 1.4.11 non-text contrast).
-- Primary buttons and active tabs use a deeper cyan → violet → magenta gradient so white text is 5.3:1 or more everywhere; the brighter gradient is still used for logos, headings and charts.
+- v2 redesign: gradients, glow and glass panels removed. Primary buttons are one flat indigo accent (#3b5bdb, white text 5.67:1); cards are opaque, so contrast is measured on the exact colour text sits on.
 - Severity badges use dedicated text shades (--low-fg, --med-fg, --high-fg, --crit-fg); the vibrant colours are kept for dots, charts and the map. Severity is always written as a word, never colour alone.
 - Charts are announced as images with a description (role="img", aria-label "Chart: ..."); the same numbers are in the tables. Model plots have descriptive alt text instead of file names.
 - Breadcrumbs on the alert page, aria-current on the active nav item and tab, role="search" on filter forms, and a label for the threat-map region.
 - Consistent page structure: one H1 plus a one-line subtitle on every page; labels in a shared .field style; buttons always declare type="submit" or type="button".
 - The threshold control on Models is now a slider kept in sync with the number field.
-- Existing: skip-to-content link, reduced-motion support, Inter font at 14px body, 12px minimum for small text.
+- Existing: skip-to-content link, reduced-motion support, one system font stack (Segoe UI on Windows) at 14px body, 12px minimum for small text.
 - New v5 screens (Simulator, Incidents, Incident detail, Accept invitation, layout editor, SMS card) use the same tokens and pass the same label and contrast checks; status pills always contain the status word; the replay progress bar is a labelled role="progressbar" and the sensitivity preview is announced with aria-live.
 
 ## Automated checks

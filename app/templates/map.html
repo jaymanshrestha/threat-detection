@@ -5,8 +5,8 @@
 <div class="field" style="margin-bottom:16px"><label for="sev">Severity</label><select id="sev"><option value="">All</option>{% for s in SEVERITIES|reverse %}<option>{{ s }}</option>{% endfor %}</select></div></div>
 {% if not has_db %}<div class="banner">GeoIP database not found - only internal (private) addresses can be placed. Run <code>python scripts/download_geoip.py</code>.</div>{% endif %}
 <div id="map" role="region" aria-label="Threat map of flagged traffic" data-site-lat="{{ site.lat }}" data-site-lon="{{ site.lon }}" data-site-name="{{ site.name }}"></div>
-<p class="small legend">Severity: <i style="background:#3b82f6;color:#3b82f6"></i>Low <i style="background:#f5b31c;color:#f5b31c"></i>Medium <i style="background:#fb6a1d;color:#fb6a1d"></i>High <i style="background:#ff3355;color:#ff3355"></i>Critical
- · Lines join the source and destination of each alert · white-outlined markers = private (RFC1918) addresses, shown as <b>Internal network</b> at {{ site.name }} (SITE_LAT/SITE_LON) · <span id="map-stats"></span></p>
+<p class="small legend">Severity: <i class="sev-Low" style="background:var(--sc)"></i>Low <i class="sev-Medium" style="background:var(--sc)"></i>Medium <i class="sev-High" style="background:var(--sc)"></i>High <i class="sev-Critical" style="background:var(--sc)"></i>Critical
+ · Lines join the source and destination of each alert · outlined markers = private (RFC1918) addresses, shown as <b>Internal network</b> at {{ site.name }} (SITE_LAT/SITE_LON) · <span id="map-stats"></span></p>
 <p class="small muted">Locations come from an offline database and are approximate (city level at best; VPNs, mobile and cloud addresses are often wrong). {{ attribution|safe }}. Basemap: Natural Earth (public domain), bundled offline.</p>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script><script src="{{ url_for('static', filename='map.js') }}"></script>{% endblock %}

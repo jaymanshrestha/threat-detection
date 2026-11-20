@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% from "_macros.html" import sev as badge %}{% from "_icons.html" import icon %}{% block title %}Style guide{% endblock %}
 {% block content %}
 <div class="page-head"><div><h1>SentinelSMB style guide</h1>
-<p class="page-sub">The single reference for colours, type and components used on every screen. Contrast ratios are calculated with the WCAG 2.1 formula from the same tokens the stylesheet uses (<code>app/design_tokens.py</code>).</p></div></div>
+<p class="page-sub">Design system v2: neutral slate surfaces, one indigo accent, four severity colours and one system font. The single reference for colours, type, spacing and components used on every screen. Contrast ratios are calculated with the WCAG 2.1 formula from the same tokens the stylesheet uses (<code>app/design_tokens.py</code>).</p></div></div>
 
 <section id="sg-palette" aria-labelledby="h-pal"><h2 id="h-pal">1. Colour palette</h2>
 {% for tname, T in themes.items() %}
@@ -15,7 +15,7 @@
 </div>{% endfor %}</section>
 
 <section id="sg-contrast" aria-labelledby="h-con"><h2 id="h-con">2. Contrast audit (WCAG 2.1 AA)</h2>
-<div class="card"><p class="small muted" style="margin-top:0">Body text needs 4.5:1; large text (24px, or 18.66px bold) and UI parts such as field borders, focus rings and severity dots need 3:1. "Before" is the palette prior to the accessibility pass; red = failed.</p>
+<div class="card"><p class="small muted" style="margin-top:0">Body text needs 4.5:1; large text (24px, or 18.66px bold) and UI parts such as field borders, focus rings and severity dots need 3:1. "Before" is the original v1 gradient palette (prior to the accessibility pass and the v2 redesign); red = failed.</p>
 {% set D = themes.dark.audit %}{% set L = themes.light.audit %}
 <table><thead><tr><th scope="col">Colour pair</th><th scope="col">Used for</th><th scope="col">Needs</th><th scope="col">Dark sample</th><th scope="col">Dark before → now</th><th scope="col">Light sample</th><th scope="col">Light before → now</th></tr></thead><tbody>
 {% for i in range(D|length) %}{% set d = D[i] %}{% set l = L[i] %}<tr><td><b>{{ d.pair }}</b></td><td class="small muted">{{ d.where }}</td><td class="small">{{ d.required }}:1</td>
@@ -26,11 +26,15 @@
 </tbody></table></div></section>
 
 <section id="sg-type"><h2>3. Typography</h2>
-<div class="card"><p class="small muted" style="margin-top:0">Typeface: <b>Inter</b> (variable, SIL Open Font License, bundled with the app so it works offline). Fallback: system-ui, Segoe UI, Roboto. Monospace: Cascadia Code / Consolas for IPs and code. Tabular numbers are on everywhere so counters do not jump.</p>
+<div class="card"><p class="small muted" style="margin-top:0">Typeface: one <b>system font stack</b> - <code>system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif</code> (Segoe UI on Windows, San Francisco on macOS). Nothing is downloaded, so the app stays fully offline. Monospace: <code>ui-monospace, Cascadia Mono, Consolas</code> for IPs and codes. Tabular numbers are on everywhere so counters do not jump.</p>
 {% for name, size, weight, sample in type_scale %}<div class="type-row"><div class="spec"><b>{{ name }}</b><br>{{ size }} · weight {{ weight }}</div><div style="font-size:{{ size }};font-weight:{{ weight }};{{ 'text-transform:uppercase;letter-spacing:.09em;color:var(--muted)' if 'Overline' in name else '' }}">{{ sample }}</div></div>{% endfor %}
 <div class="type-row"><div class="spec"><b>Monospace</b><br>12.5px · code</div><div><code>192.168.10.50 → 93.184.216.34:443/TCP</code></div></div>
 </div>
 
+</section>
+<section id="sg-spacing"><h2>3b. Spacing scale</h2>
+<div class="card"><div class="space-demo">{% for name, px in spacing %}<div class="small"><span style="width:{{ px }}"></span><code>{{ name }}</code> {{ px }}</div>{% endfor %}</div>
+<p class="small muted">All gaps and paddings come from a 4px-based scale; card padding is 16px, gaps between cards 16px, page sections 24px.</p></div>
 </section>
 <section id="sg-buttons"><h2>4. Buttons</h2>
 <div class="card"><div class="sg-row">
@@ -42,17 +46,17 @@
 <button type="button" class="icon-btn" aria-label="Example icon button">{{ icon('bell') }}</button>
 <a class="btn" href="#buttons">Link styled as button</a>
 </div>
-<ul class="small muted"><li><b>Primary</b> (gradient #0e7490 → #7c3aed → #a21caf, white text ≥ 5.3:1 at every point): one main action per form, e.g. Sign in, Generate report, Save.</li>
-<li><b>Secondary</b> (outlined): filters, test actions, reversible actions.</li>
-<li><b>Destructive</b> (orange → red): disabling a user; always behind a confirmation dialog.</li>
-<li>Icon-only buttons always carry an <code>aria-label</code>; all buttons are at least 34-38px tall and show a 2px cyan focus ring when reached by keyboard.</li></ul></div>
+<ul class="small muted"><li><b>Primary</b> (flat accent #3b5bdb, white text ≥ 5.6:1): one main action per form, e.g. Sign in, Generate report, Save.</li>
+<li><b>Secondary</b> (outlined, neutral): filters, test actions, reversible actions.</li>
+<li><b>Destructive</b> (solid red): disabling a user; always behind a confirmation dialog.</li>
+<li>Icon-only buttons always carry an <code>aria-label</code>; buttons are 32-40px tall, 6px radius, and show a 2px focus ring when reached by keyboard.</li></ul></div>
 
 </section>
 <section id="sg-badges"><h2>5. Severity, badges and tags</h2>
 <div class="card"><div class="sg-row">{% for s in severities|reverse %}{{ badge(s) }}{% endfor %}
-<span class="sim">SIMULATED</span><span class="tag ai">AI-generated - verify before acting</span><span class="tag tpl">Template report</span>
+<span class="sim">SIMULATED</span><span class="sim live">KALI LIVE</span><span class="tag ai">AI-generated - verify before acting</span><span class="tag tpl">Template report</span>
 <span class="trend up">▲ +12 /min</span><span class="trend down">▼ -4 /min</span></div>
-<p class="small muted">Severity is never shown by colour alone: every badge carries the word (Low, Medium, High, Critical). Critical badges pulse unless the user prefers reduced motion. Badge text uses a darker / lighter shade of the severity colour so it passes 4.5:1 on the tinted pill.</p></div>
+<p class="small muted">Severity is never shown by colour alone: every badge carries the word (Low, Medium, High, Critical). Colour is reserved for severity and status; everything else stays neutral. Badge text uses a darker / lighter shade of the severity colour so it passes 4.5:1 on the tinted pill.</p></div>
 
 </section>
 <section id="sg-forms"><h2>6. Form elements</h2>
@@ -72,7 +76,7 @@
 <div class="grid tiles">
 <div class="card tile t-cyan"><div class="top"><div class="l">KPI tile</div><span class="ic">{{ icon('layers') }}</span></div><div class="v">239,855</div><div class="meta"><span class="trend info up">▲ +417 /min</span><span>meta text</span></div></div>
 <div class="card tile t-red"><div class="top"><div class="l">Critical tile</div><span class="ic">{{ icon('flame') }}</span></div><div class="v crit">42</div><div class="small muted">large text, 3:1 rule</div></div>
-<div class="card sg-demo-card"><h2>Card title</h2><p class="small muted" style="margin:0">Glass card: 16px radius, 1px border, blur behind. Used for every panel, chart and table.</p></div>
+<div class="card sg-demo-card"><h2>Card title</h2><p class="small muted" style="margin:0">Opaque card: 10px radius, 1px border, 16-18px padding. Used for every panel, chart and table.</p></div>
 </div>
 <div class="card" style="margin-top:16px"><table><thead><tr><th scope="col">Severity</th><th scope="col">Category</th><th scope="col">Source → destination</th><th scope="col">Occurrences</th></tr></thead>
 <tbody><tr><td>{{ badge('Critical') }}</td><td><a href="#">Port scan</a></td><td>172.16.0.1 → 192.168.10.50</td><td>546</td></tr>
@@ -86,8 +90,10 @@
 </section>
 <section id="sg-rules"><h2>9. Layout and accessibility rules</h2>
 <div class="card"><ul class="small">
-<li>Layout: 248px sidebar (Monitor / Intelligence / Administration) + sticky top bar (live status, theme switch, user, sign out) + content up to 1640px. Below 980px the sidebar becomes a slide-out menu.</li>
-<li>Every page starts with one H1 and a one-line subtitle; sections use H2 with the gradient marker.</li>
+<li>Layout: 232px sidebar (Monitor / Intelligence / Administration) + sticky top bar (live status, theme switch, user, sign out) + content up to 1520px. Below 980px the sidebar becomes a slide-out menu.</li>
+<li>Dashboard reading order: KPI row → threat map and latest alerts → trend charts → breakdowns → incidents and model. Two equal columns, one column below 1100px.</li>
+<li>Every page starts with one H1 and a one-line subtitle separated by a rule; sections use plain H2 headings.</li>
+<li>Empty states say what is missing and what to do next; tables show a loading row until data arrives.</li>
 <li>"Skip to content" link, landmark regions (navigation, main), <code>aria-current</code> on the active page, breadcrumbs on detail pages.</li>
 <li>Live status uses <code>role="status"</code> so screen readers announce stream changes; charts have text labels and the same data is in tables.</li>
 <li>Animations respect <code>prefers-reduced-motion</code>. Both a dark and a light theme are provided and both pass WCAG AA.</li>

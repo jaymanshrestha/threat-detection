@@ -189,7 +189,7 @@ def v5_screens(pg, b, base, out, alert):
     el_shot(pg, "div.card:has(#sens-form)", out / "28_models_sensitivity.png")
     shoot(pg, base + "/datasets", out / "29_datasets.png", False, 900)
     pg.goto(base + "/notifications")
-    el_shot(pg, ".card.planned", out / "30_notifications_sms.png")
+    el_shot(pg, "#sms", out / "30_notifications_sms.png")
 
 
 def main():
@@ -235,7 +235,7 @@ def main():
         shoot(pg, base + "/style-guide", out / "15_style_guide_full.png", True, 900)
         sg = out.parent / "styleguide"
         sg.mkdir(exist_ok=True)
-        for sec in ["sg-palette", "sg-contrast", "sg-type", "sg-buttons", "sg-badges", "sg-forms", "sg-cards", "sg-icons", "sg-rules"]:
+        for sec in ["sg-palette", "sg-contrast", "sg-type", "sg-spacing", "sg-buttons", "sg-badges", "sg-forms", "sg-cards", "sg-icons", "sg-rules"]:
             pg.locator("#" + sec).screenshot(path=str(sg / f"{sec}.png"))
         print("saved style guide sections")
         pg.click("#theme-btn")  # stored in localStorage for the rest of the session
